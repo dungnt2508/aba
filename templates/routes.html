@@ -13,34 +13,12 @@
             <input type="text" id="route_code" name="route_code" required placeholder="VD: NA_002">
         </div>
         <div class="form-group">
-            <label for="route_name">Tên tuyến *</label>
+            <label for="route_name">Lộ trình *</label>
             <input type="text" id="route_name" name="route_name" required placeholder="VD: Kho Trung Chuyển -> Bưu Cục">
         </div>
         <div class="form-group">
             <label for="distance">Khoảng cách (km)</label>
             <input type="number" id="distance" name="distance" step="0.1" placeholder="VD: 178">
-        </div>
-        <div class="form-group">
-            <label for="unit_price">Đơn giá (VNĐ/km)</label>
-            <input type="number" id="unit_price" name="unit_price" step="100" placeholder="VD: 6724">
-        </div>
-        <div class="form-group">
-            <label for="employee_id">Nhân viên phụ trách *</label>
-            <select id="employee_id" name="employee_id" required>
-                <option value="">Chọn nhân viên</option>
-                {% for employee in employees %}
-                <option value="{{ employee.id }}">{{ employee.name }}</option>
-                {% endfor %}
-            </select>
-        </div>
-        <div class="form-group">
-            <label for="vehicle_id">Xe phụ trách *</label>
-            <select id="vehicle_id" name="vehicle_id" required>
-                <option value="">Chọn xe</option>
-                {% for vehicle in vehicles %}
-                <option value="{{ vehicle.id }}">{{ vehicle.license_plate }}</option>
-                {% endfor %}
-            </select>
         </div>
         <div class="form-group" style="display: flex; align-items: end;">
             <button type="submit" class="btn btn-success">Thêm tuyến</button>
@@ -55,12 +33,9 @@
         <tr>
             <th>STT</th>
             <th>Mã tuyến</th>
-            <th>Tên tuyến</th>
+            <th>Lộ trình</th>
             <th>Khoảng cách</th>
-            <th>Đơn giá</th>
-            <th>Nhân viên</th>
-            <th>Xe</th>
-            <th>Trạng thái</th>
+            <th>Thao tác</th>
         </tr>
     </thead>
     <tbody>
@@ -70,13 +45,13 @@
             <td><strong>{{ route.route_code }}</strong></td>
             <td>{{ route.route_name }}</td>
             <td>{{ route.distance }} km</td>
-            <td>{{ "{:,.0f}".format(route.unit_price) }} VNĐ/km</td>
-            <td>{{ route.employee.name }}</td>
-            <td>{{ route.vehicle.license_plate }}</td>
             <td>
-                <span style="background: rgba(39, 174, 96, 0.1); color: #27ae60; padding: 5px 10px; border-radius: 15px; font-size: 0.9em;">
-                    ✅ Hoạt động
-                </span>
+                <div style="display: flex; gap: 5px;">
+                    <a href="/routes/edit/{{ route.id }}" class="btn btn-sm btn-primary" style="padding: 5px 10px; font-size: 12px;">Sửa</a>
+                    <form method="post" action="/routes/delete/{{ route.id }}" style="display: inline;" onsubmit="return confirm('Bạn có chắc chắn muốn xóa tuyến này?')">
+                        <button type="submit" class="btn btn-sm btn-danger" style="padding: 5px 10px; font-size: 12px;">Xóa</button>
+                    </form>
+                </div>
             </td>
         </tr>
         {% endfor %}
@@ -92,20 +67,11 @@
 <div style="margin-top: 30px; padding: 20px; background: rgba(241, 196, 15, 0.1); border-radius: 10px; border-left: 4px solid #f1c40f;">
     <h4 style="color: #f39c12; margin-bottom: 10px;">💡 Lưu ý:</h4>
     <ul style="color: #2c3e50; line-height: 1.6;">
-        <li>Mỗi tuyến phải có nhân viên và xe phụ trách</li>
-        <li>Đơn giá được tính theo VNĐ/km để tính lương chuyến</li>
-        <li>Khoảng cách giúp tính toán chi phí xăng dầu chính xác</li>
-        <li>Có thể phân công một nhân viên cho nhiều tuyến</li>
+        <li>Mã tuyến phải là duy nhất trong hệ thống</li>
+        <li>Lộ trình mô tả chi tiết tuyến đường vận chuyển</li>
+        <li>Khoảng cách giúp tính toán chi phí vận chuyển chính xác</li>
+        <li>Nhân viên sẽ được phân công khi ghi nhận chuyến hàng ngày</li>
     </ul>
 </div>
 
-{% if not employees or not vehicles %}
-<div style="margin-top: 20px; padding: 20px; background: rgba(231, 76, 60, 0.1); border-radius: 10px; border-left: 4px solid #e74c3c;">
-    <h4 style="color: #e74c3c; margin-bottom: 10px;">⚠️ Cần thêm dữ liệu:</h4>
-    <ul style="color: #2c3e50; line-height: 1.6;">
-        {% if not employees %}<li>Chưa có nhân viên. <a href="/employees" style="color: #3498db;">Thêm nhân viên</a></li>{% endif %}
-        {% if not vehicles %}<li>Chưa có xe. <a href="/vehicles" style="color: #3498db;">Thêm xe</a></li>{% endif %}
-    </ul>
-</div>
-{% endif %}
 {% endblock %}

@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block title %}Sửa xe - Hệ thống quản lý vận chuyển{% endblock %}
+
+{% block content %}
+<h2>Sửa thông tin xe</h2>
+
+<div style="background: white; padding: 20px; border: 1px solid #ddd; margin-bottom: 20px;">
+    <h3 style="margin-bottom: 15px;">Cập nhật thông tin xe</h3>
+    <form method="post" action="/vehicles/edit/{{ vehicle.id }}" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+        <div class="form-group">
+            <label for="license_plate">Biển số xe *</label>
+            <input type="text" id="license_plate" name="license_plate" required placeholder="VD: 50H-448.42" value="{{ vehicle.license_plate }}">
+        </div>
+        <div class="form-group">
+            <label for="capacity">Trọng tải (kg)</label>
+            <input type="number" id="capacity" name="capacity" step="100" placeholder="VD: 5000" value="{{ vehicle.capacity or '' }}">
+        </div>
+        <div class="form-group">
+            <label for="fuel_consumption">Tiêu hao nhiên liệu (lít/100km)</label>
+            <input type="number" id="fuel_consumption" name="fuel_consumption" step="0.1" placeholder="VD: 25.5" value="{{ vehicle.fuel_consumption or '' }}">
+        </div>
+        <div class="form-group" style="display: flex; align-items: end; gap: 10px;">
+            <button type="submit" class="btn btn-success">Cập nhật</button>
+            <a href="/vehicles" class="btn btn-secondary">Hủy</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

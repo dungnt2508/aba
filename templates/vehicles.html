@@ -36,7 +36,7 @@
             <th>Trọng tải</th>
             <th>Tiêu hao nhiên liệu</th>
             <th>Ngày tạo</th>
-            <th>Trạng thái</th>
+            <th>Thao tác</th>
         </tr>
     </thead>
     <tbody>
@@ -48,9 +48,12 @@
             <td>{{ vehicle.fuel_consumption }} lít/100km</td>
             <td>{{ vehicle.created_at.strftime('%d/%m/%Y') }}</td>
             <td>
-                <span style="background: rgba(39, 174, 96, 0.1); color: #27ae60; padding: 5px 10px; border-radius: 15px; font-size: 0.9em;">
-                    ✅ Hoạt động
-                </span>
+                <div style="display: flex; gap: 5px;">
+                    <a href="/vehicles/edit/{{ vehicle.id }}" class="btn btn-sm btn-primary" style="padding: 5px 10px; font-size: 12px;">Sửa</a>
+                    <form method="post" action="/vehicles/delete/{{ vehicle.id }}" style="display: inline;" onsubmit="return confirm('Bạn có chắc chắn muốn xóa xe này?')">
+                        <button type="submit" class="btn btn-sm btn-danger" style="padding: 5px 10px; font-size: 12px;">Xóa</button>
+                    </form>
+                </div>
             </td>
         </tr>
         {% endfor %}

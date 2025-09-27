@@ -7,7 +7,7 @@
 
 <div style="background: white; padding: 20px; border: 1px solid #ddd; margin-bottom: 20px;">
     <h3 style="margin-bottom: 15px;">Thêm nhân viên mới</h3>
-    <form method="post" action="/employees/add" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+    <form method="post" action="/employees/add" enctype="multipart/form-data" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
         <div class="form-group">
             <label for="name">Họ tên *</label>
             <input type="text" id="name" name="name" required placeholder="Nhập họ tên nhân viên">
@@ -17,8 +17,24 @@
             <input type="text" id="phone" name="phone" placeholder="Nhập số điện thoại">
         </div>
         <div class="form-group">
-            <label for="base_salary">Lương cơ bản (VNĐ)</label>
-            <input type="number" id="base_salary" name="base_salary" step="1000" placeholder="Nhập lương cơ bản">
+            <label for="cccd">Số CCCD</label>
+            <input type="text" id="cccd" name="cccd" placeholder="Nhập số CCCD">
+        </div>
+        <div class="form-group">
+            <label for="cccd_expiry">Ngày hết hạn CCCD</label>
+            <input type="date" id="cccd_expiry" name="cccd_expiry">
+        </div>
+        <div class="form-group">
+            <label for="driving_license">Số bằng lái xe</label>
+            <input type="text" id="driving_license" name="driving_license" placeholder="Nhập số bằng lái xe">
+        </div>
+        <div class="form-group">
+            <label for="license_expiry">Ngày hết hạn bằng lái</label>
+            <input type="date" id="license_expiry" name="license_expiry">
+        </div>
+        <div class="form-group">
+            <label for="documents">Upload giấy tờ</label>
+            <input type="file" id="documents" name="documents" accept=".pdf,.jpg,.jpeg,.png">
         </div>
         <div class="form-group" style="display: flex; align-items: end;">
             <button type="submit" class="btn btn-success">Thêm nhân viên</button>
@@ -34,9 +50,13 @@
             <th>STT</th>
             <th>Họ tên</th>
             <th>Số điện thoại</th>
-            <th>Lương cơ bản</th>
+            <th>CCCD</th>
+            <th>Hết hạn CCCD</th>
+            <th>Bằng lái xe</th>
+            <th>Hết hạn bằng</th>
+            <th>Giấy tờ</th>
             <th>Ngày tạo</th>
-            <th>Trạng thái</th>
+            <th>Thao tác</th>
         </tr>
     </thead>
     <tbody>
@@ -45,12 +65,25 @@
             <td>{{ loop.index }}</td>
             <td><strong>{{ employee.name }}</strong></td>
             <td>{{ employee.phone or 'Chưa cập nhật' }}</td>
-            <td>{{ "{:,.0f}".format(employee.base_salary) }} VNĐ</td>
+            <td>{{ employee.cccd or 'Chưa cập nhật' }}</td>
+            <td>{{ employee.cccd_expiry.strftime('%d/%m/%Y') if employee.cccd_expiry else 'Chưa cập nhật' }}</td>
+            <td>{{ employee.driving_license or 'Chưa cập nhật' }}</td>
+            <td>{{ employee.license_expiry.strftime('%d/%m/%Y') if employee.license_expiry else 'Chưa cập nhật' }}</td>
+            <td>
+                {% if employee.documents %}
+                    <a href="/static/uploads/{{ employee.documents }}" target="_blank" style="color: #007bff;">Xem giấy tờ</a>
+                {% else %}
+                    Chưa upload
+                {% endif %}
+            </td>
             <td>{{ employee.created_at.strftime('%d/%m/%Y') }}</td>
             <td>
-                <span style="background: #d4edda; color: #155724; padding: 2px 8px; font-size: 12px;">
-                    Hoạt động
-                </span>
+                <div style="display: flex; gap: 5px;">
+                    <a href="/employees/edit/{{ employee.id }}" class="btn btn-sm btn-primary" style="padding: 5px 10px; font-size: 12px;">Sửa</a>
+                    <form method="post" action="/employees/delete/{{ employee.id }}" style="display: inline;" onsubmit="return confirm('Bạn có chắc chắn muốn xóa nhân viên này?')">
+                        <button type="submit" class="btn btn-sm btn-danger" style="padding: 5px 10px; font-size: 12px;">Xóa</button>
+                    </form>
+                </div>
             </td>
         </tr>
         {% endfor %}
@@ -66,8 +99,9 @@
 <div style="margin-top: 20px; padding: 15px; background: white; border: 1px solid #ddd;">
     <h4 style="margin-bottom: 10px;">Lưu ý:</h4>
     <ul style="line-height: 1.6;">
-        <li>Lương cơ bản là mức lương cố định hàng tháng của nhân viên</li>
-        <li>Lương chuyến sẽ được cộng thêm vào lương cơ bản khi tính lương cuối tháng</li>
+        <li>CCCD và bằng lái xe là thông tin bắt buộc cho nhân viên lái xe</li>
+        <li>Ngày hết hạn CCCD và bằng lái sẽ được kiểm tra định kỳ</li>
+        <li>Giấy tờ có thể upload file PDF, JPG, PNG</li>
         <li>Có thể cập nhật thông tin nhân viên bất kỳ lúc nào</li>
     </ul>
 </div>

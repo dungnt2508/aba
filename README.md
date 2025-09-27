@@ -4,11 +4,11 @@ Hệ thống quản lý vận chuyển được xây dựng với FastAPI backen
 
 ## ✨ Tính năng chính
 
-- 👥 **Quản lý nhân viên**: Thêm, sửa, xóa thông tin nhân viên và lương cơ bản
-- 🚚 **Quản lý xe**: Quản lý thông tin xe, biển số, trọng tải và tiêu hao nhiên liệu
-- 🛣️ **Quản lý tuyến**: Thiết lập tuyến đường, khoảng cách, đơn giá và phân công nhân viên
-- 📅 **Ghi nhận chuyến hàng ngày**: Ghi nhận chuyến hàng hàng ngày, chi phí xăng dầu và lương chuyến
-- 💰 **Tính lương cuối tháng**: Tính lương cho từng nhân viên dựa trên chuyến và lương cơ bản
+- 👥 **Quản lý nhân viên**: Thêm, sửa, xóa (soft delete) thông tin nhân viên, CCCD, bằng lái xe và upload giấy tờ
+- 🚚 **Quản lý xe**: Thêm, sửa, xóa (soft delete) thông tin xe, biển số, trọng tải và tiêu hao nhiên liệu
+- 🛣️ **Quản lý tuyến**: Thêm, sửa, xóa (soft delete) tuyến đường, khoảng cách, đơn giá và phân công xe
+- 📅 **Ghi nhận chuyến hàng ngày**: Ghi nhận chuyến hàng hàng ngày với số km, tải trọng, lái xe và biển số
+- 📊 **Thống kê hoạt động**: Báo cáo thống kê hoạt động vận chuyển theo nhân viên
 
 ## 🛠️ Công nghệ sử dụng
 
@@ -64,7 +64,12 @@ transport-management/
 - `id`: Primary key
 - `name`: Họ tên nhân viên
 - `phone`: Số điện thoại
-- `base_salary`: Lương cơ bản
+- `cccd`: Số CCCD
+- `cccd_expiry`: Ngày hết hạn CCCD
+- `driving_license`: Số bằng lái xe
+- `license_expiry`: Ngày hết hạn bằng lái
+- `documents`: Đường dẫn file giấy tờ
+- `status`: Trạng thái (1: Hoạt động, 0: Đã xóa)
 - `created_at`: Ngày tạo
 
 ### Vehicles (Xe)
@@ -72,6 +77,7 @@ transport-management/
 - `license_plate`: Biển số xe
 - `capacity`: Trọng tải (kg)
 - `fuel_consumption`: Tiêu hao nhiên liệu (lít/100km)
+- `status`: Trạng thái (1: Hoạt động, 0: Đã xóa)
 - `created_at`: Ngày tạo
 
 ### Routes (Tuyến đường)
@@ -80,52 +86,69 @@ transport-management/
 - `route_name`: Tên tuyến
 - `distance`: Khoảng cách (km)
 - `unit_price`: Đơn giá (VNĐ/km)
-- `employee_id`: ID nhân viên phụ trách
 - `vehicle_id`: ID xe phụ trách
 - `is_active`: Trạng thái hoạt động
+- `status`: Trạng thái (1: Hoạt động, 0: Đã xóa)
 - `created_at`: Ngày tạo
 
 ### DailyRoutes (Chuyến hàng ngày)
 - `id`: Primary key
 - `route_id`: ID tuyến
 - `date`: Ngày chạy
-- `fuel_cost`: Chi phí xăng dầu (VNĐ)
-- `fuel_quantity`: Số lít dầu
-- `fuel_price`: Giá dầu (VNĐ/lít)
-- `trip_salary`: Lương chuyến (VNĐ)
+- `distance_km`: Số km thực tế
+- `cargo_weight`: Tải trọng (kg)
+- `driver_name`: Tên lái xe
+- `license_plate`: Biển số xe thực tế
+- `employee_name`: Tên nhân viên phụ trách
 - `notes`: Ghi chú
 - `created_at`: Ngày tạo
 
-## 💰 Công thức tính lương
+## 📊 Thống kê hoạt động
 
-```
-Tổng lương = Lương cơ bản + Tổng lương chuyến
-```
+Hệ thống cung cấp báo cáo thống kê chi tiết về hoạt động vận chuyển:
 
-- **Lương cơ bản**: Mức lương cố định hàng tháng
-- **Lương chuyến**: Tiền thưởng cho mỗi chuyến hoàn thành
-- **Chi phí xăng**: Tổng chi phí nhiên liệu (không trừ vào lương)
+- **Số chuyến**: Tổng số chuyến vận chuyển mỗi nhân viên đã thực hiện
+- **Tổng số km**: Tổng quãng đường thực tế đã chạy
+- **Tổng tải trọng**: Tổng trọng lượng hàng hóa đã vận chuyển
+- **Các tuyến**: Danh sách mã tuyến nhân viên đã chạy
+
+## 🗑️ Soft Delete
+
+Hệ thống sử dụng **Soft Delete** cho tất cả các thực thể:
+- Khi "xóa" nhân viên, xe, hoặc tuyến, hệ thống chỉ cập nhật trạng thái `status = 0`
+- Dữ liệu không bị xóa thật khỏi database
+- Đảm bảo tính toàn vẹn dữ liệu và có thể khôi phục khi cần
+- Chỉ hiển thị các bản ghi có `status = 1` (đang hoạt động)
 
 ## 🎯 Hướng dẫn sử dụng
 
-1. **Thêm nhân viên**: Vào mục "Nhân viên" để thêm thông tin nhân viên và lương cơ bản
+1. **Thêm nhân viên**: Vào mục "Nhân viên" để thêm thông tin nhân viên, CCCD, bằng lái xe và upload giấy tờ
 2. **Thêm xe**: Vào mục "Xe" để thêm thông tin xe và biển số
-3. **Thiết lập tuyến**: Vào mục "Tuyến đường" để tạo tuyến và phân công nhân viên
-4. **Ghi nhận chuyến**: Mỗi ngày vào mục "Chuyến hàng ngày" để ghi nhận chuyến đã chạy
-5. **Tính lương**: Cuối tháng vào mục "Tính lương" để xem bảng lương chi tiết
+3. **Thiết lập tuyến**: Vào mục "Tuyến đường" để tạo tuyến và phân công xe
+4. **Ghi nhận chuyến**: Mỗi ngày vào mục "Chuyến hàng ngày" để ghi nhận chuyến với số km, tải trọng, lái xe
+5. **Xem thống kê**: Vào mục "Thống kê" để xem báo cáo hoạt động vận chuyển theo nhân viên
 
 ## 🔧 API Endpoints
 
 - `GET /`: Trang chủ
 - `GET /employees`: Danh sách nhân viên
 - `POST /employees/add`: Thêm nhân viên
+- `GET /employees/edit/{id}`: Sửa nhân viên
+- `POST /employees/edit/{id}`: Cập nhật nhân viên
+- `POST /employees/delete/{id}`: Xóa nhân viên (soft delete)
 - `GET /vehicles`: Danh sách xe
 - `POST /vehicles/add`: Thêm xe
+- `GET /vehicles/edit/{id}`: Sửa xe
+- `POST /vehicles/edit/{id}`: Cập nhật xe
+- `POST /vehicles/delete/{id}`: Xóa xe (soft delete)
 - `GET /routes`: Danh sách tuyến
 - `POST /routes/add`: Thêm tuyến
+- `GET /routes/edit/{id}`: Sửa tuyến
+- `POST /routes/edit/{id}`: Cập nhật tuyến
+- `POST /routes/delete/{id}`: Xóa tuyến (soft delete)
 - `GET /daily`: Chuyến hàng ngày
 - `POST /daily/add`: Ghi nhận chuyến
-- `GET /salary`: Tính lương
+- `GET /salary`: Thống kê hoạt động
 
 ## 📱 Responsive Design
 

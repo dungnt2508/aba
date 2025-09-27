@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}Sửa nhân viên - Hệ thống quản lý vận chuyển{% endblock %}
+
+{% block content %}
+<h2>Sửa thông tin nhân viên</h2>
+
+<div style="background: white; padding: 20px; border: 1px solid #ddd; margin-bottom: 20px;">
+    <h3 style="margin-bottom: 15px;">Cập nhật thông tin nhân viên</h3>
+    <form method="post" action="/employees/edit/{{ employee.id }}" enctype="multipart/form-data" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+        <div class="form-group">
+            <label for="name">Họ tên *</label>
+            <input type="text" id="name" name="name" required placeholder="Nhập họ tên nhân viên" value="{{ employee.name }}">
+        </div>
+        <div class="form-group">
+            <label for="phone">Số điện thoại</label>
+            <input type="text" id="phone" name="phone" placeholder="Nhập số điện thoại" value="{{ employee.phone or '' }}">
+        </div>
+        <div class="form-group">
+            <label for="cccd">Số CCCD</label>
+            <input type="text" id="cccd" name="cccd" placeholder="Nhập số CCCD" value="{{ employee.cccd or '' }}">
+        </div>
+        <div class="form-group">
+            <label for="cccd_expiry">Ngày hết hạn CCCD</label>
+            <input type="date" id="cccd_expiry" name="cccd_expiry" value="{{ employee.cccd_expiry.strftime('%Y-%m-%d') if employee.cccd_expiry else '' }}">
+        </div>
+        <div class="form-group">
+            <label for="driving_license">Số bằng lái xe</label>
+            <input type="text" id="driving_license" name="driving_license" placeholder="Nhập số bằng lái xe" value="{{ employee.driving_license or '' }}">
+        </div>
+        <div class="form-group">
+            <label for="license_expiry">Ngày hết hạn bằng lái</label>
+            <input type="date" id="license_expiry" name="license_expiry" value="{{ employee.license_expiry.strftime('%Y-%m-%d') if employee.license_expiry else '' }}">
+        </div>
+        <div class="form-group">
+            <label for="documents">Upload giấy tờ mới</label>
+            <input type="file" id="documents" name="documents" accept=".pdf,.jpg,.jpeg,.png">
+            {% if employee.documents %}
+                <p style="margin-top: 5px; font-size: 12px; color: #666;">
+                    File hiện tại: <a href="/static/uploads/{{ employee.documents }}" target="_blank">{{ employee.documents }}</a>
+                </p>
+            {% endif %}
+        </div>
+        <div class="form-group" style="display: flex; align-items: end; gap: 10px;">
+            <button type="submit" class="btn btn-success">Cập nhật</button>
+            <a href="/employees" class="btn btn-secondary">Hủy</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

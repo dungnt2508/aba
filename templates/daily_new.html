@@ -4,30 +4,32 @@
 
 {% block content %}
 <h2>📅 Ngày chấm công</h2>
-<div style="margin-bottom: 30px;">
-    <label for="selected_date" style="color: #7f8c8d; margin-right: 10px;">Chọn ngày:</label>
-    <input type="date" id="selected_date" name="selected_date" value="{{ selected_date or today.strftime('%Y-%m-%d') }}" 
-           style="padding: 5px; border: 1px solid #ddd; border-radius: 3px; color: #7f8c8d;"
-           onchange="filterByDate()">
-    <!-- Debug: selected_date = {{ selected_date }}, today = {{ today.strftime('%Y-%m-%d') }}, filter_date = {{ filter_date.strftime('%Y-%m-%d') if filter_date else 'None' }} -->
+
+<!-- Date Selector -->
+<div style="margin-bottom: 30px; padding: 15px; background: rgba(52, 152, 219, 0.1); border-radius: 8px;">
+    <form method="get" action="/daily-new" style="display: inline-block;">
+        <label for="selected_date" style="color: #2c3e50; margin-right: 10px; font-weight: bold;">Chọn ngày:</label>
+        <input type="date" 
+               id="selected_date" 
+               name="selected_date" 
+               value="{{ selected_date }}" 
+               style="padding: 8px; border: 2px solid #3498db; border-radius: 5px; font-size: 14px;"
+               onchange="this.form.submit()">
+        <button type="submit" style="margin-left: 10px; padding: 8px 15px; background: #3498db; color: white; border: none; border-radius: 5px; cursor: pointer;">
+            🔍 Xem
+        </button>
+    </form>
+    <div style="margin-top: 10px; color: #7f8c8d; font-size: 12px;">
+        Hiển thị chuyến ngày: <strong>{{ selected_date_display }}</strong>
+    </div>
 </div>
 
-<!-- Debug Info -->
-<!-- <div style="background: #f8f9fa; padding: 10px; border-radius: 5px; margin-bottom: 20px; font-size: 12px;">
-    <strong>Debug Info:</strong><br>
-    - Số tuyến: {{ routes|length }}<br>
-    - Số nhân viên: {{ employees|length }}<br>
-    - Số xe: {{ vehicles|length }}<br>
-    {% if vehicles|length > 0 %}
-    - Danh sách xe: {% for v in vehicles %}{{ v.license_plate }}{% if not loop.last %}, {% endif %}{% endfor %}<br>
-    {% endif %}
-</div> -->
-
+<!-- Chấm công form -->
 <div style="background: rgba(243, 156, 18, 0.1); padding: 20px; border-radius: 10px; margin-bottom: 30px;">
     <h3 style="color: #f39c12; margin-bottom: 15px;">📝 Bảng chấm công</h3>
     
-    <form method="post" action="/daily/add" id="dailyForm">
-        <input type="hidden" name="date" value="{{ selected_date or today.strftime('%Y-%m-%d') }}">
+    <form method="post" action="/daily-new/add" id="dailyForm">
+        <input type="hidden" name="date" value="{{ selected_date }}">
         
         <table class="table" style="background: white; margin-bottom: 20px;">
             <thead>
@@ -65,7 +67,6 @@
                     <td>
                         <select name="license_plate_{{ route.id }}" style="width: 120px; padding: 5px; border: 1px solid #ddd; border-radius: 3px;">
                             <option value="">Chọn xe</option>
-                            <!-- Debug: Total vehicles = {{ vehicles|length }} -->
                             {% for vehicle in vehicles %}
                             <option value="{{ vehicle.license_plate }}">{{ vehicle.license_plate }}</option>
                             {% endfor %}
@@ -93,11 +94,12 @@
     </form>
 </div>
 
+<!-- Chuyến đã ghi nhận -->
 <h3>📋 Chuyến đã ghi nhận</h3>
 {% if daily_routes %}
 <div style="background: rgba(39, 174, 96, 0.1); padding: 15px; border-radius: 10px; margin-bottom: 15px;">
     <p style="margin: 0; color: #27ae60; font-weight: bold;">
-        ✅ Đã ghi nhận {{ daily_routes|length }} chuyến
+        ✅ Đã ghi nhận {{ daily_routes|length }} chuyến ngày {{ selected_date_display }}
     </p>
 </div>
 
@@ -125,9 +127,24 @@
             <td>{{ daily_route.license_plate }}</td>
             <td>{{ daily_route.notes or 'Không có' }}</td>
             <td>
-                <button onclick="deleteRoute({{ daily_route.id }})" class="btn btn-sm btn-danger" style="padding: 3px 8px; font-size: 11px;">
-                    Xóa
-                </button>
+                <div style="display: flex; gap: 5px; align-items: center;">
+                    <a href="/daily-new/edit/{{ daily_route.id }}" 
+                       class="btn btn-sm" 
+                       style="background: #3498db; color: white; padding: 3px 8px; font-size: 11px; text-decoration: none; border-radius: 3px; transition: all 0.2s;"
+                       onmouseover="this.style.background='#2980b9'; this.style.transform='scale(1.05)'"
+                       onmouseout="this.style.background='#3498db'; this.style.transform='scale(1)'"
+                       title="Sửa chuyến">
+                        ✏️ Sửa
+                    </a>
+                    <button onclick="deleteRoute({{ daily_route.id }})" 
+                            class="btn btn-sm btn-danger" 
+                            style="padding: 3px 8px; font-size: 11px; border: none; border-radius: 3px; transition: all 0.2s;"
+                            onmouseover="this.style.transform='scale(1.05)'"
+                            onmouseout="this.style.transform='scale(1)'"
+                            title="Xóa chuyến">
+                        🗑️ Xóa
+                    </button>
+                </div>
             </td>
         </tr>
         {% endfor %}
@@ -150,7 +167,7 @@
 </div>
 {% else %}
 <div style="text-align: center; padding: 40px; color: #7f8c8d;">
-    <h3>📅 Chưa có chuyến nào</h3>
+    <h3>📅 Chưa có chuyến nào ngày {{ selected_date_display }}</h3>
     <p>Hãy ghi nhận chuyến đầu tiên bằng form bên trên</p>
 </div>
 {% endif %}
@@ -158,6 +175,7 @@
 <div style="margin-top: 30px; padding: 20px; background: rgba(241, 196, 15, 0.1); border-radius: 10px; border-left: 4px solid #f1c40f;">
     <h4 style="color: #f39c12; margin-bottom: 10px;">💡 Hướng dẫn:</h4>
     <ul style="color: #2c3e50; line-height: 1.6;">
+        <li><strong>Chọn ngày:</strong> Chọn ngày cần xem/chấm công</li>
         <li><strong>Số km:</strong> Quãng đường thực tế đã chạy trong chuyến</li>
         <li><strong>Tên lái xe:</strong> Chọn nhân viên thực hiện lái xe trong chuyến</li>
         <li><strong>Biển số xe:</strong> Chọn xe từ danh sách xe có sẵn trong hệ thống</li>
@@ -178,30 +196,11 @@ function deleteRoute(routeId) {
         // Tạo form để submit POST request
         const form = document.createElement('form');
         form.method = 'POST';
-        form.action = '/daily/delete/' + routeId;
+        form.action = '/daily-new/delete/' + routeId;
         document.body.appendChild(form);
         form.submit();
     }
 }
-
-// Lọc dữ liệu theo ngày được chọn
-function filterByDate() {
-    const selectedDate = document.getElementById('selected_date').value;
-    console.log('filterByDate called, selectedDate:', selectedDate); // Debug log
-    console.log('Current URL:', window.location.href); // Debug log
-    if (selectedDate) {
-        const newUrl = `/daily?selected_date=${selectedDate}`;
-        console.log('Redirecting to:', newUrl); // Debug log
-        // Reload trang với tham số ngày được chọn
-        window.location.href = newUrl;
-    } else {
-        console.log('No date selected, not redirecting'); // Debug log
-    }
-}
-
-// Không cần auto-fill vì template đã set giá trị đúng
-// document.addEventListener('DOMContentLoaded', function() {
-//     // Template đã set value đúng, không cần JavaScript can thiệp
-// });
 </script>
 {% endblock %}
+
