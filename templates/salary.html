@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+
+{% block title %}Tính lương - Hệ thống quản lý vận chuyển{% endblock %}
+
+{% block content %}
+<h2>💰 Tính lương nhân viên</h2>
+
+<div style="background: rgba(231, 76, 60, 0.1); padding: 20px; border-radius: 10px; margin-bottom: 30px;">
+    <h3 style="color: #e74c3c; margin-bottom: 15px;">📅 Chọn tháng tính lương</h3>
+    <form method="get" action="/salary" style="display: flex; gap: 20px; align-items: end; flex-wrap: wrap;">
+        <div class="form-group" style="margin-bottom: 0;">
+            <label for="month">Tháng</label>
+            <select id="month" name="month" style="width: auto; min-width: 120px;">
+                {% for i in range(1, 13) %}
+                <option value="{{ i }}" {% if i == month %}selected{% endif %}>Tháng {{ i }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group" style="margin-bottom: 0;">
+            <label for="year">Năm</label>
+            <select id="year" name="year" style="width: auto; min-width: 120px;">
+                {% for i in range(2020, 2030) %}
+                <option value="{{ i }}" {% if i == year %}selected{% endif %}>{{ i }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <button type="submit" class="btn">Xem bảng lương</button>
+    </form>
+</div>
+
+<h3>📊 Bảng lương tháng {{ month }}/{{ year }}</h3>
+{% if salary_data %}
+<table class="table">
+    <thead>
+        <tr>
+            <th>STT</th>
+            <th>Họ tên</th>
+            <th>Lương cơ bản</th>
+            <th>Số chuyến</th>
+            <th>Tổng lương chuyến</th>
+            <th>Tổng chi phí xăng</th>
+            <th>Tổng lương</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for data in salary_data %}
+        <tr>
+            <td>{{ loop.index }}</td>
+            <td><strong>{{ data.employee.name }}</strong></td>
+            <td>{{ "{:,.0f}".format(data.base_salary) }} VNĐ</td>
+            <td>
+                <span style="background: rgba(52, 152, 219, 0.1); color: #3498db; padding: 5px 10px; border-radius: 15px; font-size: 0.9em;">
+                    {{ data.trip_count }} chuyến
+                </span>
+            </td>
+            <td>{{ "{:,.0f}".format(data.total_trip_salary) }} VNĐ</td>
+            <td>{{ "{:,.0f}".format(data.total_fuel_cost) }} VNĐ</td>
+            <td>
+                <strong style="color: #27ae60; font-size: 1.1em;">
+                    {{ "{:,.0f}".format(data.total_salary) }} VNĐ
+                </strong>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+    <tfoot style="background: rgba(52, 73, 94, 0.1); font-weight: bold;">
+        <tr>
+            <td colspan="2"><strong>TỔNG CỘNG</strong></td>
+            <td><strong>{{ "{:,.0f}".format(salary_data|sum(attribute='base_salary')) }} VNĐ</strong></td>
+            <td><strong>{{ salary_data|sum(attribute='trip_count') }} chuyến</strong></td>
+            <td><strong>{{ "{:,.0f}".format(salary_data|sum(attribute='total_trip_salary')) }} VNĐ</strong></td>
+            <td><strong>{{ "{:,.0f}".format(salary_data|sum(attribute='total_fuel_cost')) }} VNĐ</strong></td>
+            <td><strong style="color: #e74c3c; font-size: 1.2em;">{{ "{:,.0f}".format(salary_data|sum(attribute='total_salary')) }} VNĐ</strong></td>
+        </tr>
+    </tfoot>
+</table>
+
+<!-- Chi tiết từng nhân viên -->
+<div style="margin-top: 30px;">
+    <h3>📋 Chi tiết từng nhân viên</h3>
+    {% for data in salary_data %}
+    {% if data.trip_count > 0 %}
+    <div style="background: rgba(255, 255, 255, 0.8); padding: 20px; border-radius: 10px; margin-bottom: 20px; border-left: 4px solid #3498db;">
+        <h4 style="color: #2c3e50; margin-bottom: 15px;">👤 {{ data.employee.name }}</h4>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+            <div>
+                <strong>Lương cơ bản:</strong><br>
+                <span style="color: #3498db;">{{ "{:,.0f}".format(data.base_salary) }} VNĐ</span>
+            </div>
+            <div>
+                <strong>Số chuyến:</strong><br>
+                <span style="color: #f39c12;">{{ data.trip_count }} chuyến</span>
+            </div>
+            <div>
+                <strong>Tổng lương chuyến:</strong><br>
+                <span style="color: #27ae60;">{{ "{:,.0f}".format(data.total_trip_salary) }} VNĐ</span>
+            </div>
+            <div>
+                <strong>Tổng chi phí xăng:</strong><br>
+                <span style="color: #e67e22;">{{ "{:,.0f}".format(data.total_fuel_cost) }} VNĐ</span>
+            </div>
+            <div>
+                <strong>Tổng lương:</strong><br>
+                <span style="color: #e74c3c; font-size: 1.1em; font-weight: bold;">{{ "{:,.0f}".format(data.total_salary) }} VNĐ</span>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    {% endfor %}
+</div>
+
+<!-- Thống kê tổng quan -->
+<div style="margin-top: 30px; padding: 25px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 15px; color: white;">
+    <h3 style="margin-bottom: 20px;">📊 Thống kê tổng quan tháng {{ month }}/{{ year }}</h3>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+        <div style="text-align: center;">
+            <h4 style="font-size: 2em; margin-bottom: 5px;">{{ salary_data|length }}</h4>
+            <p>Nhân viên</p>
+        </div>
+        <div style="text-align: center;">
+            <h4 style="font-size: 2em; margin-bottom: 5px;">{{ salary_data|sum(attribute='trip_count') }}</h4>
+            <p>Tổng chuyến</p>
+        </div>
+        <div style="text-align: center;">
+            <h4 style="font-size: 2em; margin-bottom: 5px;">{{ "{:,.0f}".format(salary_data|sum(attribute='total_fuel_cost')) }}</h4>
+            <p>Chi phí xăng (VNĐ)</p>
+        </div>
+        <div style="text-align: center;">
+            <h4 style="font-size: 2em; margin-bottom: 5px;">{{ "{:,.0f}".format(salary_data|sum(attribute='total_salary')) }}</h4>
+            <p>Tổng lương (VNĐ)</p>
+        </div>
+    </div>
+</div>
+
+{% else %}
+<div style="text-align: center; padding: 40px; color: #7f8c8d;">
+    <h3>📅 Chưa có dữ liệu lương tháng {{ month }}/{{ year }}</h3>
+    <p>Có thể chưa có chuyến nào được ghi nhận trong tháng này</p>
+    <div style="margin-top: 20px;">
+        <a href="/daily" class="btn">Ghi nhận chuyến</a>
+        <a href="/employees" class="btn" style="margin-left: 10px;">Thêm nhân viên</a>
+    </div>
+</div>
+{% endif %}
+
+<div style="margin-top: 30px; padding: 20px; background: rgba(241, 196, 15, 0.1); border-radius: 10px; border-left: 4px solid #f1c40f;">
+    <h4 style="color: #f39c12; margin-bottom: 10px;">💡 Công thức tính lương:</h4>
+    <div style="color: #2c3e50; line-height: 1.6;">
+        <p><strong>Tổng lương = Lương cơ bản + Tổng lương chuyến</strong></p>
+        <ul style="margin-top: 10px;">
+            <li><strong>Lương cơ bản:</strong> Mức lương cố định hàng tháng của nhân viên</li>
+            <li><strong>Lương chuyến:</strong> Tiền thưởng cho mỗi chuyến hoàn thành</li>
+            <li><strong>Chi phí xăng:</strong> Tổng chi phí nhiên liệu (không trừ vào lương)</li>
+        </ul>
+    </div>
+</div>
+{% endblock %}

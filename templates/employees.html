@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block title %}Quản lý nhân viên - Hệ thống quản lý vận chuyển{% endblock %}
+
+{% block content %}
+<h2>Quản lý nhân viên</h2>
+
+<div style="background: white; padding: 20px; border: 1px solid #ddd; margin-bottom: 20px;">
+    <h3 style="margin-bottom: 15px;">Thêm nhân viên mới</h3>
+    <form method="post" action="/employees/add" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+        <div class="form-group">
+            <label for="name">Họ tên *</label>
+            <input type="text" id="name" name="name" required placeholder="Nhập họ tên nhân viên">
+        </div>
+        <div class="form-group">
+            <label for="phone">Số điện thoại</label>
+            <input type="text" id="phone" name="phone" placeholder="Nhập số điện thoại">
+        </div>
+        <div class="form-group">
+            <label for="base_salary">Lương cơ bản (VNĐ)</label>
+            <input type="number" id="base_salary" name="base_salary" step="1000" placeholder="Nhập lương cơ bản">
+        </div>
+        <div class="form-group" style="display: flex; align-items: end;">
+            <button type="submit" class="btn btn-success">Thêm nhân viên</button>
+        </div>
+    </form>
+</div>
+
+<h3>Danh sách nhân viên</h3>
+{% if employees %}
+<table class="table">
+    <thead>
+        <tr>
+            <th>STT</th>
+            <th>Họ tên</th>
+            <th>Số điện thoại</th>
+            <th>Lương cơ bản</th>
+            <th>Ngày tạo</th>
+            <th>Trạng thái</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for employee in employees %}
+        <tr>
+            <td>{{ loop.index }}</td>
+            <td><strong>{{ employee.name }}</strong></td>
+            <td>{{ employee.phone or 'Chưa cập nhật' }}</td>
+            <td>{{ "{:,.0f}".format(employee.base_salary) }} VNĐ</td>
+            <td>{{ employee.created_at.strftime('%d/%m/%Y') }}</td>
+            <td>
+                <span style="background: #d4edda; color: #155724; padding: 2px 8px; font-size: 12px;">
+                    Hoạt động
+                </span>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<div style="text-align: center; padding: 30px; color: #666;">
+    <h3>Chưa có nhân viên nào</h3>
+    <p>Hãy thêm nhân viên đầu tiên bằng form bên trên</p>
+</div>
+{% endif %}
+
+<div style="margin-top: 20px; padding: 15px; background: white; border: 1px solid #ddd;">
+    <h4 style="margin-bottom: 10px;">Lưu ý:</h4>
+    <ul style="line-height: 1.6;">
+        <li>Lương cơ bản là mức lương cố định hàng tháng của nhân viên</li>
+        <li>Lương chuyến sẽ được cộng thêm vào lương cơ bản khi tính lương cuối tháng</li>
+        <li>Có thể cập nhật thông tin nhân viên bất kỳ lúc nào</li>
+    </ul>
+</div>
+{% endblock %}

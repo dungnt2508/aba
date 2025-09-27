@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+
+{% block title %}Quản lý tuyến đường - Hệ thống quản lý vận chuyển{% endblock %}
+
+{% block content %}
+<h2>🛣️ Quản lý tuyến đường</h2>
+
+<div style="background: rgba(155, 89, 182, 0.1); padding: 20px; border-radius: 10px; margin-bottom: 30px;">
+    <h3 style="color: #9b59b6; margin-bottom: 15px;">➕ Thêm tuyến mới</h3>
+    <form method="post" action="/routes/add" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+        <div class="form-group">
+            <label for="route_code">Mã tuyến *</label>
+            <input type="text" id="route_code" name="route_code" required placeholder="VD: NA_002">
+        </div>
+        <div class="form-group">
+            <label for="route_name">Tên tuyến *</label>
+            <input type="text" id="route_name" name="route_name" required placeholder="VD: Kho Trung Chuyển -> Bưu Cục">
+        </div>
+        <div class="form-group">
+            <label for="distance">Khoảng cách (km)</label>
+            <input type="number" id="distance" name="distance" step="0.1" placeholder="VD: 178">
+        </div>
+        <div class="form-group">
+            <label for="unit_price">Đơn giá (VNĐ/km)</label>
+            <input type="number" id="unit_price" name="unit_price" step="100" placeholder="VD: 6724">
+        </div>
+        <div class="form-group">
+            <label for="employee_id">Nhân viên phụ trách *</label>
+            <select id="employee_id" name="employee_id" required>
+                <option value="">Chọn nhân viên</option>
+                {% for employee in employees %}
+                <option value="{{ employee.id }}">{{ employee.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="vehicle_id">Xe phụ trách *</label>
+            <select id="vehicle_id" name="vehicle_id" required>
+                <option value="">Chọn xe</option>
+                {% for vehicle in vehicles %}
+                <option value="{{ vehicle.id }}">{{ vehicle.license_plate }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group" style="display: flex; align-items: end;">
+            <button type="submit" class="btn btn-success">Thêm tuyến</button>
+        </div>
+    </form>
+</div>
+
+<h3>📋 Danh sách tuyến đường</h3>
+{% if routes %}
+<table class="table">
+    <thead>
+        <tr>
+            <th>STT</th>
+            <th>Mã tuyến</th>
+            <th>Tên tuyến</th>
+            <th>Khoảng cách</th>
+            <th>Đơn giá</th>
+            <th>Nhân viên</th>
+            <th>Xe</th>
+            <th>Trạng thái</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for route in routes %}
+        <tr>
+            <td>{{ loop.index }}</td>
+            <td><strong>{{ route.route_code }}</strong></td>
+            <td>{{ route.route_name }}</td>
+            <td>{{ route.distance }} km</td>
+            <td>{{ "{:,.0f}".format(route.unit_price) }} VNĐ/km</td>
+            <td>{{ route.employee.name }}</td>
+            <td>{{ route.vehicle.license_plate }}</td>
+            <td>
+                <span style="background: rgba(39, 174, 96, 0.1); color: #27ae60; padding: 5px 10px; border-radius: 15px; font-size: 0.9em;">
+                    ✅ Hoạt động
+                </span>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<div style="text-align: center; padding: 40px; color: #7f8c8d;">
+    <h3>🛣️ Chưa có tuyến nào</h3>
+    <p>Hãy thêm tuyến đầu tiên bằng form bên trên</p>
+</div>
+{% endif %}
+
+<div style="margin-top: 30px; padding: 20px; background: rgba(241, 196, 15, 0.1); border-radius: 10px; border-left: 4px solid #f1c40f;">
+    <h4 style="color: #f39c12; margin-bottom: 10px;">💡 Lưu ý:</h4>
+    <ul style="color: #2c3e50; line-height: 1.6;">
+        <li>Mỗi tuyến phải có nhân viên và xe phụ trách</li>
+        <li>Đơn giá được tính theo VNĐ/km để tính lương chuyến</li>
+        <li>Khoảng cách giúp tính toán chi phí xăng dầu chính xác</li>
+        <li>Có thể phân công một nhân viên cho nhiều tuyến</li>
+    </ul>
+</div>
+
+{% if not employees or not vehicles %}
+<div style="margin-top: 20px; padding: 20px; background: rgba(231, 76, 60, 0.1); border-radius: 10px; border-left: 4px solid #e74c3c;">
+    <h4 style="color: #e74c3c; margin-bottom: 10px;">⚠️ Cần thêm dữ liệu:</h4>
+    <ul style="color: #2c3e50; line-height: 1.6;">
+        {% if not employees %}<li>Chưa có nhân viên. <a href="/employees" style="color: #3498db;">Thêm nhân viên</a></li>{% endif %}
+        {% if not vehicles %}<li>Chưa có xe. <a href="/vehicles" style="color: #3498db;">Thêm xe</a></li>{% endif %}
+    </ul>
+</div>
+{% endif %}
+{% endblock %}

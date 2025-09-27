@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+
+{% block title %}Chuyến hàng ngày - Hệ thống quản lý vận chuyển{% endblock %}
+
+{% block content %}
+<h2>📅 Ghi nhận chuyến hàng ngày</h2>
+<p style="color: #7f8c8d; margin-bottom: 30px;">Hôm nay: {{ today.strftime('%d/%m/%Y') }}</p>
+
+<div style="background: rgba(243, 156, 18, 0.1); padding: 20px; border-radius: 10px; margin-bottom: 30px;">
+    <h3 style="color: #f39c12; margin-bottom: 15px;">➕ Ghi nhận chuyến mới</h3>
+    <form method="post" action="/daily/add" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+        <div class="form-group">
+            <label for="route_id">Tuyến *</label>
+            <select id="route_id" name="route_id" required>
+                <option value="">Chọn tuyến</option>
+                {% for route in routes %}
+                <option value="{{ route.id }}">{{ route.route_code }} - {{ route.route_name }} ({{ route.employee.name }})</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="date">Ngày chạy *</label>
+            <input type="date" id="date" name="date" value="{{ today.strftime('%Y-%m-%d') }}" required>
+        </div>
+        <div class="form-group">
+            <label for="fuel_cost">Chi phí xăng dầu (VNĐ)</label>
+            <input type="number" id="fuel_cost" name="fuel_cost" step="1000" placeholder="VD: 352495">
+        </div>
+        <div class="form-group">
+            <label for="fuel_quantity">Số lít dầu</label>
+            <input type="number" id="fuel_quantity" name="fuel_quantity" step="0.1" placeholder="VD: 17.88">
+        </div>
+        <div class="form-group">
+            <label for="fuel_price">Giá dầu (VNĐ/lít)</label>
+            <input type="number" id="fuel_price" name="fuel_price" step="100" placeholder="VD: 19720">
+        </div>
+        <div class="form-group">
+            <label for="trip_salary">Lương chuyến (VNĐ)</label>
+            <input type="number" id="trip_salary" name="trip_salary" step="1000" placeholder="VD: 210496">
+        </div>
+        <div class="form-group">
+            <label for="notes">Ghi chú</label>
+            <input type="text" id="notes" name="notes" placeholder="Ghi chú về chuyến">
+        </div>
+        <div class="form-group" style="display: flex; align-items: end;">
+            <button type="submit" class="btn btn-success">Ghi nhận chuyến</button>
+        </div>
+    </form>
+</div>
+
+<h3>📋 Chuyến đã ghi nhận hôm nay</h3>
+{% if daily_routes %}
+<table class="table">
+    <thead>
+        <tr>
+            <th>STT</th>
+            <th>Tuyến</th>
+            <th>Nhân viên</th>
+            <th>Xe</th>
+            <th>Chi phí xăng</th>
+            <th>Số lít dầu</th>
+            <th>Lương chuyến</th>
+            <th>Ghi chú</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for daily_route in daily_routes %}
+        <tr>
+            <td>{{ loop.index }}</td>
+            <td><strong>{{ daily_route.route.route_code }}</strong></td>
+            <td>{{ daily_route.route.employee.name }}</td>
+            <td>{{ daily_route.route.vehicle.license_plate }}</td>
+            <td>{{ "{:,.0f}".format(daily_route.fuel_cost) }} VNĐ</td>
+            <td>{{ daily_route.fuel_quantity }} lít</td>
+            <td>{{ "{:,.0f}".format(daily_route.trip_salary) }} VNĐ</td>
+            <td>{{ daily_route.notes or 'Không có' }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<div style="margin-top: 20px; padding: 20px; background: rgba(39, 174, 96, 0.1); border-radius: 10px; border-left: 4px solid #27ae60;">
+    <h4 style="color: #27ae60; margin-bottom: 10px;">📊 Tổng kết hôm nay:</h4>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+        <div>
+            <strong>Số chuyến:</strong> {{ daily_routes|length }}
+        </div>
+        <div>
+            <strong>Tổng chi phí xăng:</strong> {{ "{:,.0f}".format(daily_routes|sum(attribute='fuel_cost')) }} VNĐ
+        </div>
+        <div>
+            <strong>Tổng lương chuyến:</strong> {{ "{:,.0f}".format(daily_routes|sum(attribute='trip_salary')) }} VNĐ
+        </div>
+    </div>
+</div>
+{% else %}
+<div style="text-align: center; padding: 40px; color: #7f8c8d;">
+    <h3>📅 Chưa có chuyến nào hôm nay</h3>
+    <p>Hãy ghi nhận chuyến đầu tiên bằng form bên trên</p>
+</div>
+{% endif %}
+
+<div style="margin-top: 30px; padding: 20px; background: rgba(241, 196, 15, 0.1); border-radius: 10px; border-left: 4px solid #f1c40f;">
+    <h4 style="color: #f39c12; margin-bottom: 10px;">💡 Hướng dẫn:</h4>
+    <ul style="color: #2c3e50; line-height: 1.6;">
+        <li><strong>Chi phí xăng dầu:</strong> Tổng tiền mua xăng dầu cho chuyến</li>
+        <li><strong>Số lít dầu:</strong> Lượng nhiên liệu tiêu thụ (có thể tính từ khoảng cách tuyến)</li>
+        <li><strong>Lương chuyến:</strong> Tiền thưởng cho nhân viên khi hoàn thành chuyến</li>
+        <li><strong>Ghi chú:</strong> Thông tin bổ sung như thay đổi đơn giá, sự cố, etc.</li>
+    </ul>
+</div>
+
+{% if not routes %}
+<div style="margin-top: 20px; padding: 20px; background: rgba(231, 76, 60, 0.1); border-radius: 10px; border-left: 4px solid #e74c3c;">
+    <h4 style="color: #e74c3c; margin-bottom: 10px;">⚠️ Chưa có tuyến nào:</h4>
+    <p style="color: #2c3e50;">Cần tạo tuyến đường trước khi ghi nhận chuyến. <a href="/routes" style="color: #3498db;">Tạo tuyến ngay</a></p>
+</div>
+{% endif %}
+{% endblock %}

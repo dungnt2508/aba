@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block title %}Quản lý xe - Hệ thống quản lý vận chuyển{% endblock %}
+
+{% block content %}
+<h2>🚚 Quản lý xe</h2>
+
+<div style="background: rgba(46, 204, 113, 0.1); padding: 20px; border-radius: 10px; margin-bottom: 30px;">
+    <h3 style="color: #2ecc71; margin-bottom: 15px;">➕ Thêm xe mới</h3>
+    <form method="post" action="/vehicles/add" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+        <div class="form-group">
+            <label for="license_plate">Biển số xe *</label>
+            <input type="text" id="license_plate" name="license_plate" required placeholder="VD: 50H-448.42">
+        </div>
+        <div class="form-group">
+            <label for="capacity">Trọng tải (kg)</label>
+            <input type="number" id="capacity" name="capacity" step="100" placeholder="VD: 5000">
+        </div>
+        <div class="form-group">
+            <label for="fuel_consumption">Tiêu hao nhiên liệu (lít/100km)</label>
+            <input type="number" id="fuel_consumption" name="fuel_consumption" step="0.1" placeholder="VD: 25.5">
+        </div>
+        <div class="form-group" style="display: flex; align-items: end;">
+            <button type="submit" class="btn btn-success">Thêm xe</button>
+        </div>
+    </form>
+</div>
+
+<h3>📋 Danh sách xe</h3>
+{% if vehicles %}
+<table class="table">
+    <thead>
+        <tr>
+            <th>STT</th>
+            <th>Biển số xe</th>
+            <th>Trọng tải</th>
+            <th>Tiêu hao nhiên liệu</th>
+            <th>Ngày tạo</th>
+            <th>Trạng thái</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for vehicle in vehicles %}
+        <tr>
+            <td>{{ loop.index }}</td>
+            <td><strong>{{ vehicle.license_plate }}</strong></td>
+            <td>{{ "{:,.0f}".format(vehicle.capacity) }} kg</td>
+            <td>{{ vehicle.fuel_consumption }} lít/100km</td>
+            <td>{{ vehicle.created_at.strftime('%d/%m/%Y') }}</td>
+            <td>
+                <span style="background: rgba(39, 174, 96, 0.1); color: #27ae60; padding: 5px 10px; border-radius: 15px; font-size: 0.9em;">
+                    ✅ Hoạt động
+                </span>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<div style="text-align: center; padding: 40px; color: #7f8c8d;">
+    <h3>🚚 Chưa có xe nào</h3>
+    <p>Hãy thêm xe đầu tiên bằng form bên trên</p>
+</div>
+{% endif %}
+
+<div style="margin-top: 30px; padding: 20px; background: rgba(241, 196, 15, 0.1); border-radius: 10px; border-left: 4px solid #f1c40f;">
+    <h4 style="color: #f39c12; margin-bottom: 10px;">💡 Lưu ý:</h4>
+    <ul style="color: #2c3e50; line-height: 1.6;">
+        <li>Biển số xe phải là duy nhất trong hệ thống</li>
+        <li>Trọng tải và tiêu hao nhiên liệu giúp tính toán chi phí chính xác hơn</li>
+        <li>Có thể gán xe cho nhiều tuyến đường khác nhau</li>
+    </ul>
+</div>
+{% endblock %}
