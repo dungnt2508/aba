@@ -705,83 +705,72 @@ async def driver_details_page(
         "to_date": to_date
     })
 
-@app.get("/salary", response_class=HTMLResponse)
-async def salary_page(
+
+
+@app.get("/salary-simple", response_class=HTMLResponse)
+async def salary_simple_page(
     request: Request, 
-    db: Session = Depends(get_db), 
-    month: Optional[int] = None, 
-    year: Optional[int] = None,
+    db: Session = Depends(get_db),
     from_date: Optional[str] = None,
     to_date: Optional[str] = None,
     driver_name: Optional[str] = None,
     license_plate: Optional[str] = None,
     route_code: Optional[str] = None
 ):
-    # Khởi tạo query cơ bản - lấy tất cả chuyến
+    """Trang thống kê đơn giản - không có JavaScript phức tạp"""
+    # Khởi tạo query cơ bản
     daily_routes_query = db.query(DailyRoute)
     
-    # Chỉ áp dụng bộ lọc thời gian nếu có tham số
+    # Áp dụng bộ lọc thời gian
     if from_date and to_date:
         try:
             from_date_obj = datetime.strptime(from_date, "%Y-%m-%d").date()
             to_date_obj = datetime.strptime(to_date, "%Y-%m-%d").date()
-            # Lấy tất cả chuyến trong khoảng thời gian
             daily_routes_query = daily_routes_query.filter(
                 DailyRoute.date >= from_date_obj,
                 DailyRoute.date <= to_date_obj
             )
         except ValueError:
-            # Nếu format date không đúng, không áp dụng bộ lọc thời gian
             pass
-    elif month and year:
-        # Chỉ áp dụng bộ lọc tháng/năm nếu có cả hai tham số
-        daily_routes_query = daily_routes_query.filter(
-            DailyRoute.date >= date(year, month, 1),
-            DailyRoute.date < date(year, month + 1, 1) if month < 12 else date(year + 1, 1, 1)
-        )
-    # Nếu không có bộ lọc thời gian nào, lấy tất cả dữ liệu
     
     # Áp dụng các bộ lọc khác
     if driver_name:
         daily_routes_query = daily_routes_query.filter(DailyRoute.driver_name.ilike(f"%{driver_name}%"))
-    
     if license_plate:
         daily_routes_query = daily_routes_query.filter(DailyRoute.license_plate.ilike(f"%{license_plate}%"))
-    
     if route_code:
         daily_routes_query = daily_routes_query.join(Route).filter(Route.route_code.ilike(f"%{route_code}%"))
     
     daily_routes = daily_routes_query.all()
     
-    # Tính thống kê theo lái xe (cho bảng tổng hợp)
+    # Tính thống kê theo lái xe
     driver_stats = {}
     for daily_route in daily_routes:
-        driver_name = daily_route.driver_name
-        license_plate = daily_route.license_plate
-        if driver_name and driver_name not in driver_stats:
-            driver_stats[driver_name] = {
-                'driver_name': driver_name,
-                'license_plate': license_plate or 'N/A',
+        driver_name_key = daily_route.driver_name
+        license_plate_key = daily_route.license_plate
+        if driver_name_key and driver_name_key not in driver_stats:
+            driver_stats[driver_name_key] = {
+                'driver_name': driver_name_key,
+                'license_plate': license_plate_key or 'N/A',
                 'trip_count': 0,
                 'total_distance': 0,
                 'total_cargo': 0,
                 'routes': set()
             }
         
-        if driver_name:
-            driver_stats[driver_name]['trip_count'] += 1
-            driver_stats[driver_name]['total_distance'] += daily_route.distance_km
-            driver_stats[driver_name]['total_cargo'] += daily_route.cargo_weight
-            driver_stats[driver_name]['routes'].add(daily_route.route.route_code)
-            # Cập nhật biển số xe nếu có
-            if license_plate:
-                driver_stats[driver_name]['license_plate'] = license_plate
+        if driver_name_key:
+            driver_stats[driver_name_key]['trip_count'] += 1
+            driver_stats[driver_name_key]['total_distance'] += daily_route.distance_km
+            driver_stats[driver_name_key]['total_cargo'] += daily_route.cargo_weight
+            driver_stats[driver_name_key]['routes'].add(daily_route.route.route_code)
+            if license_plate_key:
+                driver_stats[driver_name_key]['license_plate'] = license_plate_key
     
-    # Convert to list and format (cho bảng tổng hợp)
+    # Convert to list
     salary_data = []
-    for driver_name, stats in driver_stats.items():
+    for driver_name_key, stats in driver_stats.items():
         salary_data.append({
-            'driver_name': driver_name,
+            'driver_name': driver_name_key,
             'license_plate': stats['license_plate'],
             'trip_count': stats['trip_count'],
             'total_distance': stats['total_distance'],
@@ -789,13 +778,12 @@ async def salary_page(
             'routes': list(stats['routes'])
         })
     
-    # Sort by trip count
     salary_data.sort(key=lambda x: x['trip_count'], reverse=True)
     
-    # Tạo dữ liệu chi tiết từng chuyến (cho bảng chi tiết)
+    # Tạo dữ liệu chi tiết từng chuyến
     trip_details = []
     for daily_route in daily_routes:
-        if daily_route.driver_name:  # Chỉ lấy chuyến có tên lái xe
+        if daily_route.driver_name:
             trip_details.append({
                 'driver_name': daily_route.driver_name,
                 'license_plate': daily_route.license_plate or 'N/A',
@@ -807,18 +795,14 @@ async def salary_page(
                 'notes': daily_route.notes or ''
             })
     
-    # Sort by driver name, then by date
     trip_details.sort(key=lambda x: (x['driver_name'], x['date']))
     
-    # Lấy danh sách nhân viên, xe và tuyến để hiển thị trong dropdown
-    # Thử lấy tất cả dữ liệu trước, không filter
+    # Lấy danh sách cho dropdown
     routes = db.query(Route).all()
     employees = db.query(Employee).all()
     vehicles = db.query(Vehicle).all()
     
-    
-    
-    # Chỉ truyền tham số khi có giá trị thực sự
+    # Template data - CHỈ TRUYỀN KHI CÓ GIÁ TRỊ
     template_data = {
         "request": request,
         "salary_data": salary_data,
@@ -831,15 +815,11 @@ async def salary_page(
         "total_cargo": sum(dr.cargo_weight for dr in daily_routes)
     }
     
-    # Chỉ thêm tham số khi có giá trị
+    # Chỉ thêm khi có giá trị
     if from_date:
         template_data["from_date"] = from_date
     if to_date:
         template_data["to_date"] = to_date
-    if month:
-        template_data["month"] = month
-    if year:
-        template_data["year"] = year
     if driver_name:
         template_data["driver_name"] = driver_name
     if license_plate:
@@ -847,10 +827,10 @@ async def salary_page(
     if route_code:
         template_data["route_code"] = route_code
     
-    return templates.TemplateResponse("salary.html", template_data)
+    return templates.TemplateResponse("salary_simple.html", template_data)
 
-@app.get("/salary/export-excel")
-async def export_salary_excel(
+@app.get("/salary-simple/export-excel")
+async def export_salary_simple_excel(
     db: Session = Depends(get_db),
     from_date: Optional[str] = None,
     to_date: Optional[str] = None,
@@ -858,39 +838,27 @@ async def export_salary_excel(
     license_plate: Optional[str] = None,
     route_code: Optional[str] = None
 ):
-    """Xuất Excel danh sách chi tiết từng chuyến"""
-    # Sử dụng lại logic lọc từ salary_page
+    """Xuất Excel danh sách chi tiết từng chuyến cho salary-simple"""
+    # Sử dụng lại logic lọc từ salary_simple_page
+    daily_routes_query = db.query(DailyRoute)
+    
+    # Áp dụng bộ lọc thời gian
     if from_date and to_date:
         try:
             from_date_obj = datetime.strptime(from_date, "%Y-%m-%d").date()
             to_date_obj = datetime.strptime(to_date, "%Y-%m-%d").date()
-            daily_routes_query = db.query(DailyRoute).filter(
+            daily_routes_query = daily_routes_query.filter(
                 DailyRoute.date >= from_date_obj,
                 DailyRoute.date <= to_date_obj
             )
         except ValueError:
-            if not month:
-                month = datetime.now().month
-            if not year:
-                year = datetime.now().year
-            daily_routes_query = db.query(DailyRoute).filter(
-                DailyRoute.date >= date(year, month, 1),
-                DailyRoute.date < date(year, month + 1, 1) if month < 12 else date(year + 1, 1, 1)
-            )
-    else:
-        today = date.today()
-        daily_routes_query = db.query(DailyRoute).filter(
-            DailyRoute.date >= date(today.year, today.month, 1),
-            DailyRoute.date < date(today.year, today.month + 1, 1) if today.month < 12 else date(today.year + 1, 1, 1)
-        )
+            pass
     
     # Áp dụng các bộ lọc khác
     if driver_name:
         daily_routes_query = daily_routes_query.filter(DailyRoute.driver_name.ilike(f"%{driver_name}%"))
-    
     if license_plate:
         daily_routes_query = daily_routes_query.filter(DailyRoute.license_plate.ilike(f"%{license_plate}%"))
-    
     if route_code:
         daily_routes_query = daily_routes_query.join(Route).filter(Route.route_code.ilike(f"%{route_code}%"))
     
@@ -946,6 +914,8 @@ async def export_salary_excel(
             "Content-Type": "text/csv; charset=utf-8"
         }
     )
+
+
 
 # ===== FUEL MANAGEMENT ROUTES =====
 
