@@ -80,6 +80,25 @@ class DailyRoute(Base):
     # Relationships
     route = relationship("Route", back_populates="daily_routes")
 
+class FuelRecord(Base):
+    __tablename__ = "fuel_records"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    date = Column(Date, nullable=False)  # Ngày đổ dầu
+    fuel_type = Column(String, default="Dầu DO 0,05S-II")  # Loại dầu
+    license_plate = Column(String, nullable=False)  # Biển số xe
+    liters_pumped = Column(Float, default=0)  # Số lít dầu đã đổ
+    cost_pumped = Column(Float, default=0)  # Số tiền dầu đã đổ
+    liters_allocated = Column(Float, default=0)  # Số lít dầu khoán
+    cost_allocated = Column(Float, default=0)  # Số tiền dầu khoán
+    liters_remaining = Column(Float, default=0)  # Số lít dầu còn dư
+    cost_remaining = Column(Float, default=0)  # Số tiền dầu còn dư
+    notes = Column(String)  # Ghi chú
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    # Relationships
+    vehicle = relationship("Vehicle", foreign_keys=[license_plate], primaryjoin="FuelRecord.license_plate == Vehicle.license_plate")
+
 # Tạo bảng
 Base.metadata.create_all(bind=engine)
 
@@ -927,6 +946,185 @@ async def export_salary_excel(
             "Content-Type": "text/csv; charset=utf-8"
         }
     )
+
+# ===== FUEL MANAGEMENT ROUTES =====
+
+@app.get("/fuel", response_class=HTMLResponse)
+async def fuel_page(
+    request: Request, 
+    db: Session = Depends(get_db),
+    from_date: Optional[str] = None,
+    to_date: Optional[str] = None
+):
+    """Trang tổng hợp đổ dầu"""
+    # Xử lý khoảng thời gian
+    if from_date and to_date:
+        try:
+            from_date_obj = datetime.strptime(from_date, "%Y-%m-%d").date()
+            to_date_obj = datetime.strptime(to_date, "%Y-%m-%d").date()
+            fuel_records_query = db.query(FuelRecord).filter(
+                FuelRecord.date >= from_date_obj,
+                FuelRecord.date <= to_date_obj
+            )
+        except ValueError:
+            fuel_records_query = db.query(FuelRecord)
+    else:
+        # Nếu không có khoảng thời gian, lấy tháng hiện tại
+        today = date.today()
+        fuel_records_query = db.query(FuelRecord).filter(
+            FuelRecord.date >= date(today.year, today.month, 1),
+            FuelRecord.date < date(today.year, today.month + 1, 1) if today.month < 12 else date(today.year + 1, 1, 1)
+        )
+    
+    fuel_records = fuel_records_query.order_by(FuelRecord.date.desc(), FuelRecord.license_plate).all()
+    
+    # Tính tổng số lít dầu đã đổ
+    total_liters_pumped = sum(record.liters_pumped for record in fuel_records)
+    
+    # Lấy danh sách xe để hiển thị trong dropdown
+    vehicles = db.query(Vehicle).filter(Vehicle.status == 1).all()
+    
+    # Tạo template data
+    template_data = {
+        "request": request,
+        "fuel_records": fuel_records,
+        "vehicles": vehicles,
+        "total_liters_pumped": total_liters_pumped,
+        "total_records": len(fuel_records)
+    }
+    
+    if from_date:
+        template_data["from_date"] = from_date
+    if to_date:
+        template_data["to_date"] = to_date
+    
+    return templates.TemplateResponse("fuel.html", template_data)
+
+@app.post("/fuel/add")
+async def add_fuel_record(
+    request: Request,
+    db: Session = Depends(get_db)
+):
+    """Thêm bản ghi đổ dầu mới"""
+    form_data = await request.form()
+    
+    # Lấy dữ liệu từ form
+    date_str = form_data.get("date")
+    fuel_type = form_data.get("fuel_type", "Dầu DO 0,05S-II")
+    license_plate = form_data.get("license_plate")
+    liters_pumped = float(form_data.get("liters_pumped", 0))
+    cost_pumped = float(form_data.get("cost_pumped", 0))
+    liters_allocated = float(form_data.get("liters_allocated", 0))
+    cost_allocated = float(form_data.get("cost_allocated", 0))
+    notes = form_data.get("notes", "")
+    
+    if not date_str or not license_plate:
+        return RedirectResponse(url="/fuel", status_code=303)
+    
+    try:
+        fuel_date = datetime.strptime(date_str, "%Y-%m-%d").date()
+    except ValueError:
+        fuel_date = date.today()
+    
+    # Tính toán dầu còn dư
+    liters_remaining = liters_allocated - liters_pumped
+    cost_remaining = cost_allocated - cost_pumped
+    
+    # Tạo bản ghi mới
+    fuel_record = FuelRecord(
+        date=fuel_date,
+        fuel_type=fuel_type,
+        license_plate=license_plate,
+        liters_pumped=liters_pumped,
+        cost_pumped=cost_pumped,
+        liters_allocated=liters_allocated,
+        cost_allocated=cost_allocated,
+        liters_remaining=liters_remaining,
+        cost_remaining=cost_remaining,
+        notes=notes
+    )
+    
+    db.add(fuel_record)
+    db.commit()
+    
+    # Redirect với tham số thời gian nếu có
+    redirect_url = "/fuel"
+    from_date = form_data.get("from_date")
+    to_date = form_data.get("to_date")
+    if from_date and to_date:
+        redirect_url += f"?from_date={from_date}&to_date={to_date}"
+    
+    return RedirectResponse(url=redirect_url, status_code=303)
+
+@app.post("/fuel/delete/{fuel_record_id}")
+async def delete_fuel_record(
+    fuel_record_id: int,
+    request: Request,
+    db: Session = Depends(get_db)
+):
+    """Xóa bản ghi đổ dầu"""
+    fuel_record = db.query(FuelRecord).filter(FuelRecord.id == fuel_record_id).first()
+    if fuel_record:
+        db.delete(fuel_record)
+        db.commit()
+    
+    # Redirect về trang fuel
+    return RedirectResponse(url="/fuel", status_code=303)
+
+@app.get("/fuel/edit/{fuel_record_id}", response_class=HTMLResponse)
+async def edit_fuel_record_page(
+    request: Request,
+    fuel_record_id: int,
+    db: Session = Depends(get_db)
+):
+    """Trang sửa bản ghi đổ dầu"""
+    fuel_record = db.query(FuelRecord).filter(FuelRecord.id == fuel_record_id).first()
+    if not fuel_record:
+        return RedirectResponse(url="/fuel", status_code=303)
+    
+    vehicles = db.query(Vehicle).filter(Vehicle.status == 1).all()
+    
+    return templates.TemplateResponse("edit_fuel.html", {
+        "request": request,
+        "fuel_record": fuel_record,
+        "vehicles": vehicles
+    })
+
+@app.post("/fuel/edit/{fuel_record_id}")
+async def edit_fuel_record(
+    fuel_record_id: int,
+    request: Request,
+    db: Session = Depends(get_db)
+):
+    """Cập nhật bản ghi đổ dầu"""
+    fuel_record = db.query(FuelRecord).filter(FuelRecord.id == fuel_record_id).first()
+    if not fuel_record:
+        return RedirectResponse(url="/fuel", status_code=303)
+    
+    form_data = await request.form()
+    
+    # Cập nhật dữ liệu
+    date_str = form_data.get("date")
+    if date_str:
+        try:
+            fuel_record.date = datetime.strptime(date_str, "%Y-%m-%d").date()
+        except ValueError:
+            pass
+    
+    fuel_record.fuel_type = form_data.get("fuel_type", "Dầu DO 0,05S-II")
+    fuel_record.license_plate = form_data.get("license_plate")
+    fuel_record.liters_pumped = float(form_data.get("liters_pumped", 0))
+    fuel_record.cost_pumped = float(form_data.get("cost_pumped", 0))
+    fuel_record.liters_allocated = float(form_data.get("liters_allocated", 0))
+    fuel_record.cost_allocated = float(form_data.get("cost_allocated", 0))
+    fuel_record.notes = form_data.get("notes", "")
+    
+    # Tính toán lại dầu còn dư
+    fuel_record.liters_remaining = fuel_record.liters_allocated - fuel_record.liters_pumped
+    fuel_record.cost_remaining = fuel_record.cost_allocated - fuel_record.cost_pumped
+    
+    db.commit()
+    return RedirectResponse(url="/fuel", status_code=303)
 
 if __name__ == "__main__":
     import uvicorn

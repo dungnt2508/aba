@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+
+{% block title %}Sửa bản ghi đổ dầu - Hệ thống quản lý vận chuyển{% endblock %}
+
+{% block content %}
+<div class="edit-fuel-page">
+    <div class="page-header">
+        <h2>✏️ Sửa bản ghi đổ dầu</h2>
+        <p>Chỉnh sửa thông tin đổ dầu cho xe {{ fuel_record.license_plate }}</p>
+    </div>
+
+    <div class="edit-section">
+        <div class="card">
+            <form method="POST" action="/fuel/edit/{{ fuel_record.id }}" class="fuel-form">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="date">Ngày đổ dầu:</label>
+                        <input type="date" id="date" name="date" value="{{ fuel_record.date.strftime('%Y-%m-%d') }}" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="fuel_type">Loại dầu:</label>
+                        <select id="fuel_type" name="fuel_type">
+                            <option value="Dầu DO 0,05S-II" {% if fuel_record.fuel_type == "Dầu DO 0,05S-II" %}selected{% endif %}>Dầu DO 0,05S-II</option>
+                            <!-- Có thể thêm các loại dầu khác sau này -->
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="license_plate">Biển số xe:</label>
+                        <select id="license_plate" name="license_plate" required>
+                            <option value="">-- Chọn xe --</option>
+                            {% for vehicle in vehicles %}
+                            <option value="{{ vehicle.license_plate }}" {% if vehicle.license_plate == fuel_record.license_plate %}selected{% endif %}>
+                                {{ vehicle.license_plate }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="liters_pumped">Số lít dầu đã đổ:</label>
+                        <input type="number" id="liters_pumped" name="liters_pumped" step="0.01" min="0" 
+                               value="{{ fuel_record.liters_pumped }}" placeholder="0.00">
+                    </div>
+                    <div class="form-group">
+                        <label for="cost_pumped">Số tiền dầu đã đổ (VNĐ):</label>
+                        <input type="number" id="cost_pumped" name="cost_pumped" step="1000" min="0" 
+                               value="{{ fuel_record.cost_pumped }}" placeholder="0">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="liters_allocated">Số lít dầu khoán:</label>
+                        <input type="number" id="liters_allocated" name="liters_allocated" step="0.01" min="0" 
+                               value="{{ fuel_record.liters_allocated }}" placeholder="0.00">
+                    </div>
+                    <div class="form-group">
+                        <label for="cost_allocated">Số tiền dầu khoán (VNĐ):</label>
+                        <input type="number" id="cost_allocated" name="cost_allocated" step="1000" min="0" 
+                               value="{{ fuel_record.cost_allocated }}" placeholder="0">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group full-width">
+                        <label for="notes">Ghi chú:</label>
+                        <textarea id="notes" name="notes" rows="3" placeholder="Ghi chú thêm...">{{ fuel_record.notes or '' }}</textarea>
+                    </div>
+                </div>
+
+                <!-- Hiển thị kết quả tính toán -->
+                <div class="calculation-preview">
+                    <h4>Kết quả tính toán:</h4>
+                    <div class="calc-row">
+                        <span>Số lít dầu còn dư:</span>
+                        <span id="liters_remaining" class="calc-value">{{ "%.2f"|format(fuel_record.liters_remaining) }}</span>
+                    </div>
+                    <div class="calc-row">
+                        <span>Số tiền dầu còn dư:</span>
+                        <span id="cost_remaining" class="calc-value">{{ "{:,.0f}".format(fuel_record.cost_remaining) }}</span>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-success">Cập nhật bản ghi</button>
+                    <a href="/fuel" class="btn btn-secondary">Hủy</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// Tính toán tự động khi nhập dữ liệu
+document.addEventListener('input', function(e) {
+    const litersPumped = parseFloat(document.getElementById('liters_pumped').value) || 0;
+    const costPumped = parseFloat(document.getElementById('cost_pumped').value) || 0;
+    const litersAllocated = parseFloat(document.getElementById('liters_allocated').value) || 0;
+    const costAllocated = parseFloat(document.getElementById('cost_allocated').value) || 0;
+    
+    const litersRemaining = litersAllocated - litersPumped;
+    const costRemaining = costAllocated - costPumped;
+    
+    document.getElementById('liters_remaining').textContent = litersRemaining.toFixed(2);
+    document.getElementById('cost_remaining').textContent = costRemaining.toLocaleString('vi-VN');
+    
+    // Thay đổi màu sắc dựa trên giá trị
+    const litersElement = document.getElementById('liters_remaining');
+    const costElement = document.getElementById('cost_remaining');
+    
+    if (litersRemaining > 0) {
+        litersElement.className = 'calc-value positive';
+    } else if (litersRemaining < 0) {
+        litersElement.className = 'calc-value negative';
+    } else {
+        litersElement.className = 'calc-value';
+    }
+    
+    if (costRemaining > 0) {
+        costElement.className = 'calc-value positive';
+    } else if (costRemaining < 0) {
+        costElement.className = 'calc-value negative';
+    } else {
+        costElement.className = 'calc-value';
+    }
+});
+
+// Khởi tạo màu sắc ban đầu
+document.addEventListener('DOMContentLoaded', function() {
+    const litersRemaining = parseFloat(document.getElementById('liters_remaining').textContent);
+    const costRemaining = parseFloat(document.getElementById('cost_remaining').textContent.replace(/,/g, ''));
+    
+    const litersElement = document.getElementById('liters_remaining');
+    const costElement = document.getElementById('cost_remaining');
+    
+    if (litersRemaining > 0) {
+        litersElement.className = 'calc-value positive';
+    } else if (litersRemaining < 0) {
+        litersElement.className = 'calc-value negative';
+    }
+    
+    if (costRemaining > 0) {
+        costElement.className = 'calc-value positive';
+    } else if (costRemaining < 0) {
+        costElement.className = 'calc-value negative';
+    }
+});
+</script>
+{% endblock %}

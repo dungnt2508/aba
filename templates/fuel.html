@@ -1,0 +1,220 @@
+{% extends "base.html" %}
+
+{% block title %}Tổng hợp đổ dầu - Hệ thống quản lý vận chuyển{% endblock %}
+
+{% block content %}
+<div class="fuel-page">
+    <div class="page-header">
+        <h2>📊 Tổng hợp đổ dầu</h2>
+        <p>Quản lý lượng dầu theo tháng cho tất cả xe</p>
+    </div>
+
+    <!-- Bộ lọc / Thông tin tổng -->
+    <div class="filter-section">
+        <div class="card">
+            <h3>🔍 Bộ lọc / Thông tin tổng</h3>
+            <form method="GET" action="/fuel" class="filter-form">
+                <div class="filter-row">
+                    <div class="filter-group">
+                        <label for="from_date">Từ ngày:</label>
+                        <input type="date" id="from_date" name="from_date" value="{{ from_date or '' }}">
+                    </div>
+                    <div class="filter-group">
+                        <label for="to_date">Đến ngày:</label>
+                        <input type="date" id="to_date" name="to_date" value="{{ to_date or '' }}">
+                    </div>
+                    <div class="filter-group">
+                        <button type="submit" class="btn btn-primary">Lọc dữ liệu</button>
+                        <a href="/fuel" class="btn btn-secondary">Xem tất cả</a>
+                    </div>
+                </div>
+            </form>
+            
+            <div class="summary-stats">
+                <div class="stat-item">
+                    <span class="stat-label">Tổng số lít dầu đã đổ:</span>
+                    <span class="stat-value">{{ "%.2f"|format(total_liters_pumped) }} lít</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Tổng số bản ghi:</span>
+                    <span class="stat-value">{{ total_records }} bản ghi</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Form thêm bản ghi mới -->
+    <div class="add-section">
+        <div class="card">
+            <h3>➕ Thêm bản ghi đổ dầu mới</h3>
+            <form method="POST" action="/fuel/add" class="fuel-form">
+                <input type="hidden" name="from_date" value="{{ from_date or '' }}">
+                <input type="hidden" name="to_date" value="{{ to_date or '' }}">
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="date">Ngày đổ dầu:</label>
+                        <input type="date" id="date" name="date" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="fuel_type">Loại dầu:</label>
+                        <select id="fuel_type" name="fuel_type">
+                            <option value="Dầu DO 0,05S-II" selected>Dầu DO 0,05S-II</option>
+                            <!-- Có thể thêm các loại dầu khác sau này -->
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="license_plate">Biển số xe:</label>
+                        <select id="license_plate" name="license_plate" required>
+                            <option value="">-- Chọn xe --</option>
+                            {% for vehicle in vehicles %}
+                            <option value="{{ vehicle.license_plate }}">{{ vehicle.license_plate }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="liters_pumped">Số lít dầu đã đổ:</label>
+                        <input type="number" id="liters_pumped" name="liters_pumped" step="0.01" min="0" placeholder="0.00">
+                    </div>
+                    <div class="form-group">
+                        <label for="cost_pumped">Số tiền dầu đã đổ (VNĐ):</label>
+                        <input type="number" id="cost_pumped" name="cost_pumped" step="1000" min="0" placeholder="0">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="liters_allocated">Số lít dầu khoán:</label>
+                        <input type="number" id="liters_allocated" name="liters_allocated" step="0.01" min="0" placeholder="0.00">
+                    </div>
+                    <div class="form-group">
+                        <label for="cost_allocated">Số tiền dầu khoán (VNĐ):</label>
+                        <input type="number" id="cost_allocated" name="cost_allocated" step="1000" min="0" placeholder="0">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group full-width">
+                        <label for="notes">Ghi chú:</label>
+                        <textarea id="notes" name="notes" rows="2" placeholder="Ghi chú thêm..."></textarea>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-success">Thêm bản ghi</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Bảng chi tiết từng xe -->
+    <div class="data-section">
+        <div class="card">
+            <h3>📋 Bảng chi tiết từng xe</h3>
+            
+            {% if fuel_records %}
+            <div class="table-responsive">
+                <table class="fuel-table">
+                    <thead>
+                        <tr>
+                            <th>STT</th>
+                            <th>Ngày đổ</th>
+                            <th>Loại dầu</th>
+                            <th>Biển số xe</th>
+                            <th>Số lít đã đổ</th>
+                            <th>Số tiền đã đổ</th>
+                            <th>Số lít khoán</th>
+                            <th>Số tiền khoán</th>
+                            <th>Số lít còn dư</th>
+                            <th>Số tiền còn dư</th>
+                            <th>Ghi chú</th>
+                            <th>Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for record in fuel_records %}
+                        <tr class="{{ 'surplus' if record.liters_remaining > 0 else 'deficit' if record.liters_remaining < 0 else '' }}">
+                            <td>{{ loop.index }}</td>
+                            <td>{{ record.date.strftime('%d/%m/%Y') }}</td>
+                            <td>{{ record.fuel_type }}</td>
+                            <td><strong>{{ record.license_plate }}</strong></td>
+                            <td class="number">{{ "%.2f"|format(record.liters_pumped) }}</td>
+                            <td class="number">{{ "{:,.0f}".format(record.cost_pumped) }}</td>
+                            <td class="number">{{ "%.2f"|format(record.liters_allocated) }}</td>
+                            <td class="number">{{ "{:,.0f}".format(record.cost_allocated) }}</td>
+                            <td class="number {{ 'positive' if record.liters_remaining > 0 else 'negative' if record.liters_remaining < 0 else '' }}">
+                                {{ "%.2f"|format(record.liters_remaining) }}
+                            </td>
+                            <td class="number {{ 'positive' if record.cost_remaining > 0 else 'negative' if record.cost_remaining < 0 else '' }}">
+                                {{ "{:,.0f}".format(record.cost_remaining) }}
+                            </td>
+                            <td class="notes">{{ record.notes or '' }}</td>
+                            <td class="actions">
+                                <a href="/fuel/edit/{{ record.id }}" class="btn btn-sm btn-warning">Sửa</a>
+                                <form method="POST" action="/fuel/delete/{{ record.id }}" style="display: inline;" 
+                                      onsubmit="return confirm('Bạn có chắc chắn muốn xóa bản ghi này?')">
+                                    <button type="submit" class="btn btn-sm btn-danger">Xóa</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot>
+                        <tr class="summary-row">
+                            <td colspan="4"><strong>TỔNG CỘNG</strong></td>
+                            <td class="number"><strong>{{ "%.2f"|format(fuel_records | sum(attribute='liters_pumped')) }}</strong></td>
+                            <td class="number"><strong>{{ "{:,.0f}".format(fuel_records | sum(attribute='cost_pumped')) }}</strong></td>
+                            <td class="number"><strong>{{ "%.2f"|format(fuel_records | sum(attribute='liters_allocated')) }}</strong></td>
+                            <td class="number"><strong>{{ "{:,.0f}".format(fuel_records | sum(attribute='cost_allocated')) }}</strong></td>
+                            <td class="number"><strong>{{ "%.2f"|format(fuel_records | sum(attribute='liters_remaining')) }}</strong></td>
+                            <td class="number"><strong>{{ "{:,.0f}".format(fuel_records | sum(attribute='cost_remaining')) }}</strong></td>
+                            <td colspan="2"></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+            {% else %}
+            <div class="no-data">
+                <p>Không có dữ liệu đổ dầu nào trong khoảng thời gian đã chọn.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Thông tin hướng dẫn -->
+    <div class="info-section">
+        <div class="card">
+            <h3>ℹ️ Hướng dẫn sử dụng</h3>
+            <ul>
+                <li><strong>Số lít dầu còn dư</strong> = Số lít dầu khoán - Số lít dầu đã đổ</li>
+                <li><strong>Số tiền dầu còn dư</strong> = Số tiền dầu khoán - Số tiền dầu đã đổ</li>
+                <li>Màu <span class="positive">xanh lá</span>: Dư dầu (dương)</li>
+                <li>Màu <span class="negative">đỏ</span>: Thâm hụt dầu (âm)</li>
+                <li>Hệ thống tự động tính toán các giá trị còn dư khi bạn nhập dữ liệu</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<script>
+// Thiết lập ngày mặc định là hôm nay
+document.addEventListener('DOMContentLoaded', function() {
+    const dateInput = document.getElementById('date');
+    if (dateInput && !dateInput.value) {
+        const today = new Date().toISOString().split('T')[0];
+        dateInput.value = today;
+    }
+});
+
+// Tính toán tự động khi nhập dữ liệu
+document.addEventListener('input', function(e) {
+    if (e.target.id === 'liters_pumped' || e.target.id === 'liters_allocated' || 
+        e.target.id === 'cost_pumped' || e.target.id === 'cost_allocated') {
+        // Có thể thêm logic tính toán tự động ở đây nếu cần
+    }
+});
+</script>
+{% endblock %}
