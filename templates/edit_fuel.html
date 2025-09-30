@@ -39,27 +39,23 @@
 
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="liters_pumped">Số lít dầu đã đổ:</label>
-                        <input type="number" id="liters_pumped" name="liters_pumped" step="0.01" min="0" 
-                               value="{{ fuel_record.liters_pumped }}" placeholder="0.00">
+                        <label for="fuel_price_per_liter">Giá xăng dầu hôm nay (đồng/lít):</label>
+                        <input type="number" id="fuel_price_per_liter" name="fuel_price_per_liter" step="0.01" min="0" 
+                               value="{{ fuel_record.fuel_price_per_liter }}" placeholder="0.00">
                     </div>
                     <div class="form-group">
-                        <label for="cost_pumped">Số tiền dầu đã đổ (VNĐ):</label>
-                        <input type="number" id="cost_pumped" name="cost_pumped" step="1000" min="0" 
-                               value="{{ fuel_record.cost_pumped }}" placeholder="0">
+                        <label for="liters_pumped">Số lít dầu đã đổ:</label>
+                        <input type="number" id="liters_pumped" name="liters_pumped" step="0.001" min="0" 
+                               value="{{ fuel_record.liters_pumped }}" placeholder="0.000">
                     </div>
                 </div>
 
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="liters_allocated">Số lít dầu khoán:</label>
-                        <input type="number" id="liters_allocated" name="liters_allocated" step="0.01" min="0" 
-                               value="{{ fuel_record.liters_allocated }}" placeholder="0.00">
-                    </div>
-                    <div class="form-group">
-                        <label for="cost_allocated">Số tiền dầu khoán (VNĐ):</label>
-                        <input type="number" id="cost_allocated" name="cost_allocated" step="1000" min="0" 
-                               value="{{ fuel_record.cost_allocated }}" placeholder="0">
+                        <label for="cost_pumped">Số tiền dầu đã đổ (VNĐ):</label>
+                        <input type="number" id="cost_pumped" name="cost_pumped" step="0.01" min="0" 
+                               value="{{ fuel_record.cost_pumped }}" placeholder="0.00" readonly>
+                        <small class="form-help">Tự động tính: Giá xăng dầu × Số lít dầu đã đổ</small>
                     </div>
                 </div>
 
@@ -70,18 +66,6 @@
                     </div>
                 </div>
 
-                <!-- Hiển thị kết quả tính toán -->
-                <div class="calculation-preview">
-                    <h4>Kết quả tính toán:</h4>
-                    <div class="calc-row">
-                        <span>Số lít dầu còn dư:</span>
-                        <span id="liters_remaining" class="calc-value">{{ "%.2f"|format(fuel_record.liters_remaining) }}</span>
-                    </div>
-                    <div class="calc-row">
-                        <span>Số tiền dầu còn dư:</span>
-                        <span id="cost_remaining" class="calc-value">{{ "{:,.0f}".format(fuel_record.cost_remaining) }}</span>
-                    </div>
-                </div>
 
                 <div class="form-actions">
                     <button type="submit" class="btn btn-success">Cập nhật bản ghi</button>
@@ -95,56 +79,16 @@
 <script>
 // Tính toán tự động khi nhập dữ liệu
 document.addEventListener('input', function(e) {
-    const litersPumped = parseFloat(document.getElementById('liters_pumped').value) || 0;
-    const costPumped = parseFloat(document.getElementById('cost_pumped').value) || 0;
-    const litersAllocated = parseFloat(document.getElementById('liters_allocated').value) || 0;
-    const costAllocated = parseFloat(document.getElementById('cost_allocated').value) || 0;
-    
-    const litersRemaining = litersAllocated - litersPumped;
-    const costRemaining = costAllocated - costPumped;
-    
-    document.getElementById('liters_remaining').textContent = litersRemaining.toFixed(2);
-    document.getElementById('cost_remaining').textContent = costRemaining.toLocaleString('vi-VN');
-    
-    // Thay đổi màu sắc dựa trên giá trị
-    const litersElement = document.getElementById('liters_remaining');
-    const costElement = document.getElementById('cost_remaining');
-    
-    if (litersRemaining > 0) {
-        litersElement.className = 'calc-value positive';
-    } else if (litersRemaining < 0) {
-        litersElement.className = 'calc-value negative';
-    } else {
-        litersElement.className = 'calc-value';
-    }
-    
-    if (costRemaining > 0) {
-        costElement.className = 'calc-value positive';
-    } else if (costRemaining < 0) {
-        costElement.className = 'calc-value negative';
-    } else {
-        costElement.className = 'calc-value';
-    }
-});
-
-// Khởi tạo màu sắc ban đầu
-document.addEventListener('DOMContentLoaded', function() {
-    const litersRemaining = parseFloat(document.getElementById('liters_remaining').textContent);
-    const costRemaining = parseFloat(document.getElementById('cost_remaining').textContent.replace(/,/g, ''));
-    
-    const litersElement = document.getElementById('liters_remaining');
-    const costElement = document.getElementById('cost_remaining');
-    
-    if (litersRemaining > 0) {
-        litersElement.className = 'calc-value positive';
-    } else if (litersRemaining < 0) {
-        litersElement.className = 'calc-value negative';
-    }
-    
-    if (costRemaining > 0) {
-        costElement.className = 'calc-value positive';
-    } else if (costRemaining < 0) {
-        costElement.className = 'calc-value negative';
+    if (e.target.id === 'fuel_price_per_liter' || e.target.id === 'liters_pumped') {
+        const fuelPrice = parseFloat(document.getElementById('fuel_price_per_liter').value) || 0;
+        const litersPumped = parseFloat(document.getElementById('liters_pumped').value) || 0;
+        const costPumped = fuelPrice * litersPumped;
+        
+        const costPumpedInput = document.getElementById('cost_pumped');
+        if (costPumpedInput) {
+            // Làm tròn đến đơn vị đồng (0 chữ số thập phân)
+            costPumpedInput.value = Math.round(costPumped).toFixed(0);
+        }
     }
 });
 </script>

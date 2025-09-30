@@ -142,7 +142,7 @@
 <div style="margin-top: 30px;">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
         <h3 style="margin: 0;">📋 Chi tiết từng chuyến</h3>
-        <a href="/salary-simple/export-excel{% if from_date and to_date %}?from_date={{ from_date }}&to_date={{ to_date }}{% endif %}{% if driver_name %}{% if from_date and to_date %}&{% else %}?{% endif %}driver_name={{ driver_name }}{% endif %}{% if license_plate %}{% if from_date and to_date or driver_name %}&{% else %}?{% endif %}license_plate={{ license_plate }}{% endif %}{% if route_code %}{% if from_date and to_date or driver_name or license_plate %}&{% else %}?{% endif %}route_code={{ route_code }}{% endif %}" 
+        <a href="/general-report/export-excel{% if from_date and to_date %}?from_date={{ from_date }}&to_date={{ to_date }}{% endif %}{% if driver_name %}{% if from_date and to_date %}&{% else %}?{% endif %}driver_name={{ driver_name }}{% endif %}{% if license_plate %}{% if from_date and to_date or driver_name %}&{% else %}?{% endif %}license_plate={{ license_plate }}{% endif %}{% if route_code %}{% if from_date and to_date or driver_name or license_plate %}&{% else %}?{% endif %}route_code={{ route_code }}{% endif %}" 
            class="btn" 
            style="background: #27ae60; color: white; padding: 10px 20px; text-decoration: none; border-radius: 8px; font-size: 14px; transition: all 0.3s; display: inline-flex; align-items: center; gap: 8px;"
            onmouseover="this.style.background='#229954'; this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 8px rgba(0,0,0,0.2)'"
@@ -152,49 +152,51 @@
         </a>
     </div>
     <div style="background: rgba(255, 255, 255, 0.9); padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-        <table style="width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden;">
-            <thead>
-                <tr style="background: linear-gradient(135deg, #3498db, #2980b9); color: white;">
-                    <th style="padding: 15px; text-align: left; font-weight: 600;">STT</th>
-                    <th style="padding: 15px; text-align: left; font-weight: 600;">Tên lái xe</th>
-                    <th style="padding: 15px; text-align: left; font-weight: 600;">Ngày chạy</th>                    
-                    <th style="padding: 15px; text-align: left; font-weight: 600;">Biển số xe</th>
-                    <th style="padding: 15px; text-align: left; font-weight: 600;">Mã tuyến</th>
-                    <th style="padding: 15px; text-align: left; font-weight: 600;">Ghi chú</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for trip in trip_details %}
-                <tr style="border-bottom: 1px solid #ecf0f1; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='rgba(52, 152, 219, 0.05)'" onmouseout="this.style.backgroundColor='white'">
-                    <td style="padding: 15px; font-weight: 500; color: #2c3e50;">{{ loop.index }}</td>
-                    <td style="padding: 15px; font-weight: 600; color: #2c3e50;">
-                        <span style="background: rgba(155, 89, 182, 0.1); color: #9b59b6; padding: 5px 10px; border-radius: 15px; font-size: 0.9em;">
-                            👤 {{ trip.driver_name }}
-                        </span>
-                    </td>
-                    <td style="padding: 15px; font-weight: 500; color: #2c3e50;">
-                        <span style="background: rgba(52, 152, 219, 0.1); color: #3498db; padding: 5px 10px; border-radius: 15px; font-size: 0.9em;">
-                            {{ trip.date.strftime('%d/%m/%Y') }}
-                        </span>
-                    </td>
-                    
-                    <td style="padding: 15px;">
-                        <span style="background: rgba(231, 76, 60, 0.1); color: #e74c3c; padding: 5px 10px; border-radius: 15px; font-size: 0.9em; font-weight: 500;">
-                            {{ trip.license_plate }}
-                        </span>
-                    </td>
-                    <td style="padding: 15px;">
-                        <span style="background: rgba(39, 174, 96, 0.1); color: #27ae60; padding: 5px 10px; border-radius: 15px; font-size: 0.9em; font-weight: 500;">
-                            {{ trip.route_code }}
-                        </span>
-                    </td>
-                    <td style="padding: 15px; color: #7f8c8d; font-style: italic;">
-                        {{ trip.notes or '-' }}
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <div class="table-container">
+            <table style="width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden;">
+                <thead>
+                    <tr style="background: linear-gradient(135deg, #3498db, #2980b9); color: white;">
+                        <th style="padding: 15px; text-align: left; font-weight: 600;">STT</th>
+                        <th style="padding: 15px; text-align: left; font-weight: 600;">Tên lái xe</th>
+                        <th style="padding: 15px; text-align: left; font-weight: 600;">Ngày chạy</th>                    
+                        <th style="padding: 15px; text-align: left; font-weight: 600;">Biển số xe</th>
+                        <th style="padding: 15px; text-align: left; font-weight: 600;">Mã tuyến</th>
+                        <th style="padding: 15px; text-align: left; font-weight: 600;">Ghi chú</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for trip in trip_details %}
+                    <tr style="border-bottom: 1px solid #ecf0f1; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='rgba(52, 152, 219, 0.05)'" onmouseout="this.style.backgroundColor='white'">
+                        <td style="padding: 15px; font-weight: 500; color: #2c3e50;">{{ loop.index }}</td>
+                        <td style="padding: 15px; font-weight: 600; color: #2c3e50;">
+                            <span style="background: rgba(155, 89, 182, 0.1); color: #9b59b6; padding: 5px 10px; border-radius: 15px; font-size: 0.9em;">
+                                👤 {{ trip.driver_name }}
+                            </span>
+                        </td>
+                        <td style="padding: 15px; font-weight: 500; color: #2c3e50;">
+                            <span style="background: rgba(52, 152, 219, 0.1); color: #3498db; padding: 5px 10px; border-radius: 15px; font-size: 0.9em;">
+                                {{ trip.date.strftime('%d/%m/%Y') }}
+                            </span>
+                        </td>
+                        
+                        <td style="padding: 15px;">
+                            <span style="background: rgba(231, 76, 60, 0.1); color: #e74c3c; padding: 5px 10px; border-radius: 15px; font-size: 0.9em; font-weight: 500;">
+                                {{ trip.license_plate }}
+                            </span>
+                        </td>
+                        <td style="padding: 15px;">
+                            <span style="background: rgba(39, 174, 96, 0.1); color: #27ae60; padding: 5px 10px; border-radius: 15px; font-size: 0.9em; font-weight: 500;">
+                                {{ trip.route_code }}
+                            </span>
+                        </td>
+                        <td style="padding: 15px; color: #7f8c8d; font-style: italic;">
+                            {{ trip.notes or '-' }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 

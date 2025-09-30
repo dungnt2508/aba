@@ -1,0 +1,1388 @@
+{% extends "base.html" %}
+
+{% block title %}Tổng hợp báo cáo tài chính - Hệ thống quản lý vận chuyển{% endblock %}
+
+{% block content %}
+<style>
+    .finance-container {
+        max-width: 1600px;
+        margin: 0 auto;
+        padding: 20px;
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        min-height: 100vh;
+    }
+    
+    .page-header {
+        text-align: center;
+        margin-bottom: 40px;
+        padding: 30px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 20px;
+        color: white;
+        box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+    }
+    
+    .page-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin: 0;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+    
+    .page-subtitle {
+        font-size: 1.1rem;
+        margin-top: 10px;
+        opacity: 0.9;
+    }
+    
+    .filter-card {
+        background: white;
+        border-radius: 20px;
+        padding: 30px;
+        margin-bottom: 30px;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        border: 1px solid rgba(255,255,255,0.2);
+    }
+    
+    .filter-title {
+        color: #2c3e50;
+        font-size: 1.4rem;
+        font-weight: 600;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .filter-form {
+        display: flex;
+        gap: 20px;
+        align-items: end;
+        flex-wrap: wrap;
+    }
+    
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .form-label {
+        font-weight: 600;
+        color: #555;
+        font-size: 0.95rem;
+    }
+    
+    .form-select {
+        padding: 12px 16px;
+        border: 2px solid #e1e8ed;
+        border-radius: 12px;
+        font-size: 1rem;
+        min-width: 140px;
+        transition: all 0.3s ease;
+        background: white;
+    }
+    
+    .form-select:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+    
+    .btn-primary {
+        background: linear-gradient(135deg, #27ae60, #229954);
+        color: white;
+        padding: 14px 28px;
+        border: none;
+        border-radius: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 1rem;
+        box-shadow: 0 4px 15px rgba(39, 174, 96, 0.3);
+    }
+    
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(39, 174, 96, 0.4);
+    }
+    
+    .btn-secondary {
+        background: linear-gradient(135deg, #3498db, #2980b9);
+        color: white;
+        padding: 12px 24px;
+        border: none;
+        border-radius: 10px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-block;
+        box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+    }
+    
+    .btn-secondary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(52, 152, 219, 0.4);
+    }
+    
+    .btn-add {
+        background: linear-gradient(135deg, #e74c3c, #c0392b);
+        color: white;
+        padding: 12px 24px;
+        border: none;
+        border-radius: 10px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3);
+    }
+    
+    .btn-add:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(231, 76, 60, 0.4);
+    }
+    
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 25px;
+        margin-bottom: 30px;
+    }
+    
+    .stat-card {
+        background: white;
+        border-radius: 20px;
+        padding: 30px;
+        text-align: center;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+        border: 1px solid rgba(255,255,255,0.2);
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+    }
+    
+    .stat-icon {
+        font-size: 3rem;
+        margin-bottom: 15px;
+        display: block;
+    }
+    
+    .stat-title {
+        color: #2c3e50;
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-bottom: 10px;
+    }
+    
+    .stat-value {
+        font-size: 2rem;
+        font-weight: 700;
+        margin: 0;
+    }
+    
+    .stat-income {
+        color: #27ae60;
+    }
+    
+    .stat-expense {
+        color: #e74c3c;
+    }
+    
+    .stat-balance {
+        color: #3498db;
+    }
+    
+    .table-container {
+        background: white;
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        margin-bottom: 30px;
+    }
+    
+    .table-scroll-container {
+        max-height: 500px;
+        overflow-y: auto;
+        overflow-x: auto;
+        border: 1px solid #e1e8ed;
+        border-radius: 0 0 20px 20px;
+        position: relative;
+        /* Custom scrollbar styling */
+        scrollbar-width: thin;
+        scrollbar-color: #667eea #f8f9fa;
+    }
+    
+    .table-scroll-container::-webkit-scrollbar {
+        width: 12px;
+        height: 12px;
+    }
+    
+    .table-scroll-container::-webkit-scrollbar-track {
+        background: #f8f9fa;
+        border-radius: 6px;
+        border: 1px solid #e9ecef;
+    }
+    
+    .table-scroll-container::-webkit-scrollbar-thumb {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        border-radius: 6px;
+        border: 2px solid #f8f9fa;
+    }
+    
+    .table-scroll-container::-webkit-scrollbar-thumb:hover {
+        background: linear-gradient(135deg, #5a6fd8, #6a4190);
+    }
+    
+    .table-scroll-container::-webkit-scrollbar-corner {
+        background: #f8f9fa;
+    }
+    
+    /* Scroll indicator */
+    .table-scroll-container::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        width: 20px;
+        height: 20px;
+        background: linear-gradient(45deg, transparent 30%, #667eea 30%, #667eea 70%, transparent 70%);
+        pointer-events: none;
+        opacity: 0.3;
+        z-index: 1;
+    }
+    
+    .table-header {
+        background: linear-gradient(135deg, #2c3e50, #34495e);
+        color: white;
+        padding: 25px 30px;
+        border-bottom: none;
+    }
+    
+    .table-title {
+        margin: 0;
+        font-size: 1.4rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .data-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.95rem;
+        min-width: 100%;
+    }
+    
+    .data-table thead th {
+        background: linear-gradient(135deg, #34495e, #2c3e50);
+        color: white;
+        padding: 18px 12px;
+        text-align: left;
+        font-weight: 600;
+        border: none;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .data-table thead th.amount-header {
+        min-width: 140px;
+        text-align: right;
+    }
+    
+    .data-table tbody tr {
+        border-bottom: 1px solid #f1f3f4;
+        transition: all 0.3s ease;
+    }
+    
+    .data-table tbody tr:hover {
+        background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+        transform: scale(1.01);
+    }
+    
+    .data-table tbody td {
+        padding: 16px 12px;
+        border: none;
+        vertical-align: middle;
+    }
+    
+    .data-table tbody td.amount-column,
+    .data-table tfoot td.amount-column {
+        min-width: 140px;
+        white-space: nowrap;
+        text-align: right;
+    }
+    
+    .action-buttons {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 4px;
+        white-space: nowrap;
+    }
+    
+    .data-table tfoot tr {
+        background: linear-gradient(135deg, #2c3e50, #34495e);
+        color: white;
+        font-weight: bold;
+    }
+    
+    .data-table tfoot td {
+        padding: 20px 12px;
+        border: none;
+        vertical-align: middle;
+    }
+    
+    .amount-positive {
+        color: #27ae60;
+        font-weight: 600;
+        background: rgba(39, 174, 96, 0.1);
+        padding: 4px 8px;
+        border-radius: 6px;
+    }
+    
+    .amount-negative {
+        color: #e74c3c;
+        font-weight: 600;
+        background: rgba(231, 76, 60, 0.1);
+        padding: 4px 8px;
+        border-radius: 6px;
+    }
+    
+    .form-modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.5);
+        z-index: 1000;
+        backdrop-filter: blur(5px);
+    }
+    
+    .form-content {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: white;
+        border-radius: 20px;
+        padding: 40px;
+        max-width: 800px;
+        width: 90%;
+        max-height: 90vh;
+        overflow-y: auto;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    
+    .form-title {
+        color: #2c3e50;
+        font-size: 1.6rem;
+        font-weight: 600;
+        margin-bottom: 25px;
+        text-align: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+    }
+    
+    .form-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 20px;
+        margin-bottom: 25px;
+    }
+    
+    .form-input {
+        width: 100%;
+        padding: 12px 16px;
+        border: 2px solid #e1e8ed;
+        border-radius: 12px;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        background: white;
+    }
+    
+    .form-input:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+    
+    .form-textarea {
+        grid-column: 1 / -1;
+        min-height: 80px;
+        resize: vertical;
+    }
+    
+    .form-actions {
+        display: flex;
+        gap: 15px;
+        justify-content: flex-end;
+        margin-top: 25px;
+    }
+    
+    .btn-cancel {
+        background: #95a5a6;
+        color: white;
+        padding: 12px 24px;
+        border: none;
+        border-radius: 10px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-cancel:hover {
+        background: #7f8c8d;
+        transform: translateY(-2px);
+    }
+    
+    .btn-save {
+        background: linear-gradient(135deg, #27ae60, #229954);
+        color: white;
+        padding: 12px 24px;
+        border: none;
+        border-radius: 10px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-save:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(39, 174, 96, 0.4);
+    }
+    
+    .btn-edit {
+        background: #e3f2fd;
+        color: #1976d2;
+        padding: 4px 8px;
+        border: 1px solid #bbdefb;
+        border-radius: 4px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        margin-right: 4px;
+        font-size: 0.8rem;
+        display: inline-block;
+        text-align: center;
+        min-width: 50px;
+        height: 28px;
+        line-height: 20px;
+    }
+    
+    .btn-edit:hover {
+        background: #bbdefb;
+        border-color: #90caf9;
+        transform: translateY(-1px);
+    }
+    
+    .btn-delete {
+        background: #ffebee;
+        color: #d32f2f;
+        padding: 4px 8px;
+        border: 1px solid #ffcdd2;
+        border-radius: 4px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-size: 0.8rem;
+        display: inline-block;
+        text-align: center;
+        min-width: 50px;
+        height: 28px;
+        line-height: 20px;
+    }
+    
+    .btn-delete:hover {
+        background: #ffcdd2;
+        border-color: #ef9a9a;
+        transform: translateY(-1px);
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: #7f8c8d;
+    }
+    
+    .empty-icon {
+        font-size: 4rem;
+        margin-bottom: 20px;
+        opacity: 0.5;
+    }
+    
+    .empty-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin-bottom: 10px;
+        color: #2c3e50;
+    }
+    
+    .empty-description {
+        font-size: 1rem;
+        margin-bottom: 30px;
+    }
+    
+    .export-section {
+        text-align: center;
+        margin-top: 30px;
+    }
+    
+    /* Total Summary Section */
+    .total-summary-section {
+        margin-top: 20px;
+        margin-bottom: 20px;
+    }
+    
+    .total-summary-card {
+        background: linear-gradient(135deg, #2c3e50, #34495e);
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 4px 15px rgba(44, 62, 80, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .total-summary-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 20px;
+    }
+    
+    .total-label {
+        color: rgba(255, 255, 255, 0.9);
+        font-size: 1rem;
+        font-weight: 600;
+        margin-right: 10px;
+    }
+    
+    .total-value {
+        font-size: 1.2rem;
+        font-weight: 700;
+        text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+    }
+    
+    .total-amount {
+        color: #3498db;
+    }
+    
+    .total-positive {
+        color: #27ae60;
+        background: rgba(39, 174, 96, 0.2);
+        padding: 4px 12px;
+        border-radius: 6px;
+        border: 1px solid rgba(39, 174, 96, 0.3);
+    }
+    
+    .total-negative {
+        color: #e74c3c;
+        background: rgba(231, 76, 60, 0.2);
+        padding: 4px 12px;
+        border-radius: 6px;
+        border: 1px solid rgba(231, 76, 60, 0.3);
+    }
+    
+    .total-neutral {
+        color: #f39c12;
+        background: rgba(243, 156, 18, 0.2);
+        padding: 4px 12px;
+        border-radius: 6px;
+        border: 1px solid rgba(243, 156, 18, 0.3);
+    }
+    
+    @media (max-width: 768px) {
+        .finance-container {
+            padding: 15px;
+        }
+        
+        .page-title {
+            font-size: 2rem;
+        }
+        
+        .filter-form {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        
+        .form-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .data-table {
+            font-size: 0.85rem;
+        }
+        
+        .data-table thead th,
+        .data-table tbody td,
+        .data-table tfoot td {
+            padding: 12px 8px;
+        }
+        
+        .data-table tbody td.amount-column,
+        .data-table tfoot td.amount-column {
+            min-width: 120px;
+            font-size: 0.9rem;
+        }
+        
+        .data-table thead th.amount-header {
+            min-width: 120px;
+        }
+        
+        /* Mobile scroll container */
+        .table-scroll-container {
+            max-height: 400px;
+            border-radius: 0 0 15px 15px;
+        }
+        
+        .table-scroll-container::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        
+        .table-scroll-container::-webkit-scrollbar-thumb {
+            border: 1px solid #f8f9fa;
+        }
+        
+        .action-buttons {
+            gap: 2px;
+        }
+        
+        .btn-edit, .btn-delete {
+            min-width: 45px;
+            height: 26px;
+            font-size: 0.75rem;
+            padding: 3px 6px;
+        }
+        
+        /* Mobile styles for total summary */
+        .total-summary-card {
+            padding: 15px;
+        }
+        
+        .total-summary-row {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 15px;
+        }
+        
+        .total-label {
+            font-size: 0.9rem;
+            margin-right: 0;
+            margin-bottom: 5px;
+        }
+        
+        .total-value {
+            font-size: 1.1rem;
+        }
+    }
+</style>
+
+<div class="finance-container">
+    <!-- Header -->
+    <div class="page-header">
+        <h1 class="page-title">💰 Tổng hợp báo cáo tài chính</h1>
+        <p class="page-subtitle">Quản lý và theo dõi thu chi doanh nghiệp</p>
+    </div>
+    
+    <!-- Filter Section -->
+    <div class="filter-card">
+        <h3 class="filter-title">
+            📅 Chọn tháng báo cáo
+        </h3>
+        <form method="GET" action="/finance-report" class="filter-form">
+            <div class="form-group">
+                <label class="form-label">Tháng</label>
+                <select name="month" class="form-select">
+                    <option value="1" {% if selected_month == 1 %}selected{% endif %}>Tháng 1</option>
+                    <option value="2" {% if selected_month == 2 %}selected{% endif %}>Tháng 2</option>
+                    <option value="3" {% if selected_month == 3 %}selected{% endif %}>Tháng 3</option>
+                    <option value="4" {% if selected_month == 4 %}selected{% endif %}>Tháng 4</option>
+                    <option value="5" {% if selected_month == 5 %}selected{% endif %}>Tháng 5</option>
+                    <option value="6" {% if selected_month == 6 %}selected{% endif %}>Tháng 6</option>
+                    <option value="7" {% if selected_month == 7 %}selected{% endif %}>Tháng 7</option>
+                    <option value="8" {% if selected_month == 8 %}selected{% endif %}>Tháng 8</option>
+                    <option value="9" {% if selected_month == 9 %}selected{% endif %}>Tháng 9</option>
+                    <option value="10" {% if selected_month == 10 %}selected{% endif %}>Tháng 10</option>
+                    <option value="11" {% if selected_month == 11 %}selected{% endif %}>Tháng 11</option>
+                    <option value="12" {% if selected_month == 12 %}selected{% endif %}>Tháng 12</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Năm</label>
+                <select name="year" class="form-select">
+                    {% for year in range(2020, 2030) %}
+                    <option value="{{ year }}" {% if selected_year == year %}selected{% endif %}>{{ year }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit" class="btn-primary">
+                🔍 Xem báo cáo
+            </button>
+        </form>
+    </div>
+
+    <!-- Stats Cards -->
+    {% if finance_data %}
+    <div class="stats-grid">
+        <div class="stat-card">
+            <span class="stat-icon">📈</span>
+            <h4 class="stat-title">Tổng thu</h4>
+            <p class="stat-value stat-income">
+                {% if total_income %}
+                    {{ "{:,.0f}".format(total_income) }} ₫
+                {% else %}
+                    0 ₫
+                {% endif %}
+            </p>
+        </div>
+        
+        <div class="stat-card">
+            <span class="stat-icon">📉</span>
+            <h4 class="stat-title">Tổng chi</h4>
+            <p class="stat-value stat-expense">
+                {% if total_expense %}
+                    {{ "{:,.0f}".format(total_expense) }} ₫
+                {% else %}
+                    0 ₫
+                {% endif %}
+            </p>
+        </div>
+        
+        <div class="stat-card">
+            <span class="stat-icon">💰</span>
+            <h4 class="stat-title">Lợi nhuận</h4>
+            <p class="stat-value {% if total_balance and total_balance > 0 %}stat-income{% elif total_balance and total_balance < 0 %}stat-expense{% else %}stat-balance{% endif %}">
+                {% if total_balance %}
+                    {{ "{:,.0f}".format(total_balance) }} ₫
+                {% else %}
+                    0 ₫
+                {% endif %}
+            </p>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Add Button -->
+    <div style="text-align: right; margin-bottom: 20px;">
+        <button onclick="showAddForm()" class="btn-add">
+            ➕ Thêm bản ghi mới
+        </button>
+    </div>
+
+    <!-- Data Table -->
+    {% if finance_data %}
+    <div class="table-container">
+        <div class="table-header">
+            <h3 class="table-title">📋 Chi tiết thu chi</h3>
+        </div>
+        
+        <div class="table-scroll-container">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Ngày</th>
+                        <th>Danh mục</th>
+                        <th>Diễn giải</th>
+                        <th>Mã tuyến</th>
+                        <th class="amount-header">Số tiền (chưa VAT)</th>
+                        <th style="text-align: center;">VAT</th>
+                        <th style="text-align: center;">CK1</th>
+                        <th style="text-align: center;">CK2</th>
+                        <th class="amount-header">Thành tiền</th>
+                        <th>Ghi chú</th>
+                        <th style="text-align: center;">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in finance_data %}
+                    <tr>
+                        <td>{{ item.date.strftime('%d/%m/%Y') if item.date else '-' }}</td>
+                        <td>
+                            <span style="padding: 4px 8px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; 
+                                {% if item.transaction_type == 'Thu' %}background: rgba(39, 174, 96, 0.1); color: #27ae60;{% else %}background: rgba(231, 76, 60, 0.1); color: #e74c3c;{% endif %}">
+                                {{ item.transaction_type or '-' }}
+                            </span>
+                        </td>
+                        <td>{{ item.description or '-' }}</td>
+                        <td>{{ item.route_code or '-' }}</td>
+                        <td class="amount-column">
+                            {% if item.amount %}
+                                {{ "{:,.0f}".format(item.amount) }} ₫
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td style="text-align: center;">
+                            {% if item.vat %}
+                                {{ "{:.0f}".format(item.vat) }}%
+                            {% else %}
+                                0%
+                            {% endif %}
+                        </td>
+                        <td style="text-align: center;">
+                            {% if item.discount1 %}
+                                {{ "{:.1f}".format(item.discount1) }}%
+                            {% else %}
+                                0%
+                            {% endif %}
+                        </td>
+                        <td style="text-align: center;">
+                            {% if item.discount2 %}
+                                {{ "{:.1f}".format(item.discount2) }}%
+                            {% else %}
+                                0%
+                            {% endif %}
+                        </td>
+                        <td class="amount-column">
+                            {% if item.total %}
+                                <span class="{% if item.total > 0 %}amount-positive{% else %}amount-negative{% endif %}">
+                                    {{ "{:,.0f}".format(item.total) }} ₫
+                                </span>
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td>{{ item.note or '-' }}</td>
+                        <td style="text-align: center;">
+                            <div class="action-buttons">
+                                <button onclick="editFinanceRecord({{ item.id }})" class="btn-edit" title="Sửa">
+                                    Sửa
+                                </button>
+                                <button onclick="deleteFinanceRecord({{ item.id }})" class="btn-delete" title="Xóa">
+                                    Xóa
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <!-- Total Summary Section -->
+    <div class="total-summary-section">
+        <div class="total-summary-card">
+            <div class="total-summary-row">
+                <span class="total-label">Tổng số tiền (chưa VAT):</span>
+                <span class="total-value total-amount">
+                    {% set total_amount = finance_data | sum(attribute='amount') %}
+                    {% if total_amount %}
+                        {{ "{:,.0f}".format(total_amount) }} ₫
+                    {% else %}
+                        0 ₫
+                    {% endif %}
+                </span>
+                <span class="total-label">Tổng thành tiền:</span>
+                <span class="total-value {% if total_balance and total_balance > 0 %}total-positive{% elif total_balance and total_balance < 0 %}total-negative{% else %}total-neutral{% endif %}">
+                    {% if total_balance %}
+                        {{ "{:,.0f}".format(total_balance) }} ₫
+                    {% else %}
+                        0 ₫
+                    {% endif %}
+                </span>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <!-- Empty State -->
+    <div class="table-container">
+        <div class="empty-state">
+            <div class="empty-icon">📊</div>
+            <h3 class="empty-title">Chưa có dữ liệu</h3>
+            <p class="empty-description">Chưa có bản ghi tài chính nào cho tháng {{ selected_month }}/{{ selected_year }}</p>
+            <button onclick="showAddForm()" class="btn-primary">
+                ➕ Thêm bản ghi đầu tiên
+            </button>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Export Section -->
+    {% if finance_data %}
+    <div class="export-section">
+        <a href="/finance-report/export?month={{ selected_month }}&year={{ selected_year }}" class="btn-secondary">
+            📊 Xuất báo cáo Excel
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Add Form Modal -->
+<div id="addFormModal" class="form-modal">
+    <div class="form-content">
+        <h3 class="form-title">📝 Thêm bản ghi tài chính mới</h3>
+        <form id="addFinanceForm" onsubmit="submitFinanceForm(event)">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label class="form-label">Danh mục *</label>
+                    <select id="category" name="category" class="form-input" required onchange="updateFormFields()">
+                        <option value="">-- Chọn danh mục --</option>
+                        <option value="Thu">Khoản Thu</option>
+                        <option value="Chi">Khoản Chi</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label id="dateLabel" class="form-label">Ngày thu *</label>
+                    <input type="date" id="date" name="date" class="form-input" required>
+                </div>
+
+                <div class="form-group">
+                    <label id="descriptionLabel" class="form-label">Tên khách hàng *</label>
+                    <input type="text" id="description" name="description" class="form-input" required placeholder="Nhập tên khách hàng">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Mã tuyến</label>
+                    <input type="text" id="route_code" name="route_code" class="form-input" placeholder="Ví dụ: NA_001">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Số tiền (chưa VAT) *</label>
+                    <input type="number" id="amount_before_vat" name="amount_before_vat" class="form-input" required min="0" step="0.01" placeholder="0" oninput="calculateFinalAmount()">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">VAT (%)</label>
+                    <select id="vat_rate" name="vat_rate" class="form-input" onchange="calculateFinalAmount()">
+                        <option value="0">0%</option>
+                        <option value="8">8%</option>
+                        <option value="10">10%</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Chiết khấu 1 (%)</label>
+                    <input type="number" id="discount1_rate" name="discount1_rate" class="form-input" min="0" max="100" step="0.1" placeholder="0" oninput="calculateFinalAmount()">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Chiết khấu 2 (%)</label>
+                    <input type="number" id="discount2_rate" name="discount2_rate" class="form-input" min="0" max="100" step="0.1" placeholder="0" oninput="calculateFinalAmount()">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Thành tiền</label>
+                    <input type="text" id="final_amount" class="form-input" readonly style="background-color: #f8f9fa; font-weight: bold;" placeholder="0 ₫">
+                </div>
+
+                <div class="form-group form-textarea">
+                    <label class="form-label">Ghi chú</label>
+                    <textarea id="notes" name="notes" class="form-input form-textarea" placeholder="Nhập ghi chú (tùy chọn)"></textarea>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="button" onclick="hideAddForm()" class="btn-cancel">
+                    ❌ Hủy
+                </button>
+                <button type="submit" class="btn-save">
+                    💾 Lưu
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Edit Form Modal -->
+<div id="editFormModal" class="form-modal">
+    <div class="form-content">
+        <h3 class="form-title">✏️ Sửa bản ghi tài chính</h3>
+        <form id="editFinanceForm" onsubmit="submitEditFinanceForm(event)">
+            <input type="hidden" id="edit_record_id" name="record_id">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label class="form-label">Danh mục *</label>
+                    <select id="edit_category" name="category" class="form-input" required onchange="updateEditFormFields()">
+                        <option value="">-- Chọn danh mục --</option>
+                        <option value="Thu">Khoản Thu</option>
+                        <option value="Chi">Khoản Chi</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label id="edit_dateLabel" class="form-label">Ngày thu *</label>
+                    <input type="date" id="edit_date" name="date" class="form-input" required>
+                </div>
+
+                <div class="form-group">
+                    <label id="edit_descriptionLabel" class="form-label">Tên khách hàng *</label>
+                    <input type="text" id="edit_description" name="description" class="form-input" required placeholder="Nhập tên khách hàng">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Mã tuyến</label>
+                    <input type="text" id="edit_route_code" name="route_code" class="form-input" placeholder="Ví dụ: NA_001">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Số tiền (chưa VAT) *</label>
+                    <input type="number" id="edit_amount_before_vat" name="amount_before_vat" class="form-input" required min="0" step="0.01" placeholder="0" oninput="calculateEditFinalAmount()">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">VAT (%)</label>
+                    <select id="edit_vat_rate" name="vat_rate" class="form-input" onchange="calculateEditFinalAmount()">
+                        <option value="0">0%</option>
+                        <option value="8">8%</option>
+                        <option value="10">10%</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Chiết khấu 1 (%)</label>
+                    <input type="number" id="edit_discount1_rate" name="discount1_rate" class="form-input" min="0" max="100" step="0.1" placeholder="0" oninput="calculateEditFinalAmount()">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Chiết khấu 2 (%)</label>
+                    <input type="number" id="edit_discount2_rate" name="discount2_rate" class="form-input" min="0" max="100" step="0.1" placeholder="0" oninput="calculateEditFinalAmount()">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Thành tiền</label>
+                    <input type="text" id="edit_final_amount" class="form-input" readonly style="background-color: #f8f9fa; font-weight: bold;" placeholder="0 ₫">
+                </div>
+
+                <div class="form-group form-textarea">
+                    <label class="form-label">Ghi chú</label>
+                    <textarea id="edit_notes" name="notes" class="form-input form-textarea" placeholder="Nhập ghi chú (tùy chọn)"></textarea>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="button" onclick="hideEditForm()" class="btn-cancel">
+                    ❌ Hủy
+                </button>
+                <button type="submit" class="btn-save">
+                    💾 Cập nhật
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+// Show add form
+function showAddForm() {
+    document.getElementById('addFormModal').style.display = 'block';
+    // Set ngày hiện tại
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('date').value = today;
+    // Reset form
+    document.getElementById('addFinanceForm').reset();
+    document.getElementById('date').value = today;
+    document.getElementById('final_amount').value = '';
+}
+
+// Hide add form
+function hideAddForm() {
+    document.getElementById('addFormModal').style.display = 'none';
+}
+
+// Update form fields based on category
+function updateFormFields() {
+    const category = document.getElementById('category').value;
+    const dateLabel = document.getElementById('dateLabel');
+    const descriptionLabel = document.getElementById('descriptionLabel');
+    const descriptionInput = document.getElementById('description');
+    
+    if (category === 'Thu') {
+        dateLabel.textContent = 'Ngày thu *';
+        descriptionLabel.textContent = 'Tên khách hàng *';
+        descriptionInput.placeholder = 'Nhập tên khách hàng';
+    } else if (category === 'Chi') {
+        dateLabel.textContent = 'Ngày chi *';
+        descriptionLabel.textContent = 'Diễn giải *';
+        descriptionInput.placeholder = 'Nhập diễn giải chi tiết';
+    }
+}
+
+// Calculate final amount
+function calculateFinalAmount() {
+    const amount = parseFloat(document.getElementById('amount_before_vat').value) || 0;
+    const vatRate = parseFloat(document.getElementById('vat_rate').value) || 0;
+    const discount1Rate = parseFloat(document.getElementById('discount1_rate').value) || 0;
+    const discount2Rate = parseFloat(document.getElementById('discount2_rate').value) || 0;
+    
+    const vatAmount = amount * (vatRate / 100);
+    const discount1Amount = amount * (discount1Rate / 100);
+    const discount2Amount = amount * (discount2Rate / 100);
+    
+    const finalAmount = amount + vatAmount - discount1Amount - discount2Amount;
+    
+    document.getElementById('final_amount').value = finalAmount.toLocaleString('vi-VN', {minimumFractionDigits: 0, maximumFractionDigits: 0}) + ' ₫';
+    
+    // Update color based on amount
+    const finalAmountElement = document.getElementById('final_amount');
+    if (finalAmount > 0) {
+        finalAmountElement.style.color = '#27ae60';
+    } else if (finalAmount < 0) {
+        finalAmountElement.style.color = '#e74c3c';
+    } else {
+        finalAmountElement.style.color = '#2c3e50';
+    }
+}
+
+// Submit form
+async function submitFinanceForm(event) {
+    event.preventDefault();
+    
+    const form = document.getElementById('addFinanceForm');
+    const formData = new FormData(form);
+    
+    // Validate required fields
+    const category = formData.get('category');
+    const date = formData.get('date');
+    const description = formData.get('description');
+    const amount = formData.get('amount_before_vat');
+    
+    if (!category || !date || !description || !amount) {
+        alert('Vui lòng điền đầy đủ các trường bắt buộc (*)');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/finance-report/add', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            alert('Đã thêm bản ghi tài chính thành công!');
+            hideAddForm();
+            // Cập nhật bảng thay vì reload trang
+            updateFinanceTable();
+        } else {
+            alert('Lỗi: ' + result.message);
+        }
+    } catch (error) {
+        alert('Lỗi kết nối: ' + error.message);
+    }
+}
+
+// Edit finance record
+async function editFinanceRecord(recordId) {
+    try {
+        const response = await fetch(`/finance-report/get/${recordId}`);
+        const result = await response.json();
+        
+        if (result.success) {
+            const data = result.data;
+            
+            // Fill edit form with existing data
+            document.getElementById('edit_record_id').value = data.id;
+            document.getElementById('edit_category').value = data.transaction_type;
+            document.getElementById('edit_date').value = data.date;
+            document.getElementById('edit_description').value = data.description;
+            document.getElementById('edit_route_code').value = data.route_code || '';
+            document.getElementById('edit_amount_before_vat').value = data.amount;
+            document.getElementById('edit_vat_rate').value = data.vat || 0;
+            document.getElementById('edit_discount1_rate').value = data.discount1 || 0;
+            document.getElementById('edit_discount2_rate').value = data.discount2 || 0;
+            document.getElementById('edit_notes').value = data.note || '';
+            
+            // Update form fields based on category
+            updateEditFormFields();
+            
+            // Calculate final amount
+            calculateEditFinalAmount();
+            
+            // Show edit modal
+            document.getElementById('editFormModal').style.display = 'block';
+        } else {
+            alert('Lỗi: ' + result.message);
+        }
+    } catch (error) {
+        alert('Lỗi kết nối: ' + error.message);
+    }
+}
+
+// Delete finance record
+async function deleteFinanceRecord(recordId) {
+    if (confirm('Bạn có chắc chắn muốn xóa bản ghi này?')) {
+        try {
+            const response = await fetch(`/finance-report/delete/${recordId}`, {
+                method: 'DELETE'
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                alert('Đã xóa bản ghi thành công!');
+                // Cập nhật bảng thay vì reload trang
+                updateFinanceTable();
+            } else {
+                alert('Lỗi: ' + result.message);
+            }
+        } catch (error) {
+            alert('Lỗi kết nối: ' + error.message);
+        }
+    }
+}
+
+// Hide edit form
+function hideEditForm() {
+    document.getElementById('editFormModal').style.display = 'none';
+}
+
+// Update edit form fields based on category
+function updateEditFormFields() {
+    const category = document.getElementById('edit_category').value;
+    const dateLabel = document.getElementById('edit_dateLabel');
+    const descriptionLabel = document.getElementById('edit_descriptionLabel');
+    const descriptionInput = document.getElementById('edit_description');
+    
+    if (category === 'Thu') {
+        dateLabel.textContent = 'Ngày thu *';
+        descriptionLabel.textContent = 'Tên khách hàng *';
+        descriptionInput.placeholder = 'Nhập tên khách hàng';
+    } else if (category === 'Chi') {
+        dateLabel.textContent = 'Ngày chi *';
+        descriptionLabel.textContent = 'Diễn giải *';
+        descriptionInput.placeholder = 'Nhập diễn giải chi tiết';
+    }
+}
+
+// Calculate final amount for edit form
+function calculateEditFinalAmount() {
+    const amount = parseFloat(document.getElementById('edit_amount_before_vat').value) || 0;
+    const vatRate = parseFloat(document.getElementById('edit_vat_rate').value) || 0;
+    const discount1Rate = parseFloat(document.getElementById('edit_discount1_rate').value) || 0;
+    const discount2Rate = parseFloat(document.getElementById('edit_discount2_rate').value) || 0;
+    
+    const vatAmount = amount * (vatRate / 100);
+    const discount1Amount = amount * (discount1Rate / 100);
+    const discount2Amount = amount * (discount2Rate / 100);
+    
+    const finalAmount = amount + vatAmount - discount1Amount - discount2Amount;
+    
+    document.getElementById('edit_final_amount').value = finalAmount.toLocaleString('vi-VN', {minimumFractionDigits: 0, maximumFractionDigits: 0}) + ' ₫';
+    
+    // Update color based on amount
+    const finalAmountElement = document.getElementById('edit_final_amount');
+    if (finalAmount > 0) {
+        finalAmountElement.style.color = '#27ae60';
+    } else if (finalAmount < 0) {
+        finalAmountElement.style.color = '#e74c3c';
+    } else {
+        finalAmountElement.style.color = '#2c3e50';
+    }
+}
+
+// Submit edit form
+async function submitEditFinanceForm(event) {
+    event.preventDefault();
+    
+    const form = document.getElementById('editFinanceForm');
+    const formData = new FormData(form);
+    
+    // Validate required fields
+    const category = formData.get('category');
+    const date = formData.get('date');
+    const description = formData.get('description');
+    const amount = formData.get('amount_before_vat');
+    
+    if (!category || !date || !description || !amount) {
+        alert('Vui lòng điền đầy đủ các trường bắt buộc (*)');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/finance-report/edit', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            alert('Đã cập nhật bản ghi tài chính thành công!');
+            hideEditForm();
+            // Cập nhật bảng thay vì reload trang
+            updateFinanceTable();
+        } else {
+            alert('Lỗi: ' + result.message);
+        }
+    } catch (error) {
+        alert('Lỗi kết nối: ' + error.message);
+    }
+}
+
+// Update finance table without reloading page
+async function updateFinanceTable() {
+    try {
+        // Get current month and year from URL or form
+        const urlParams = new URLSearchParams(window.location.search);
+        const month = urlParams.get('month') || new Date().getMonth() + 1;
+        const year = urlParams.get('year') || new Date().getFullYear();
+        
+        // Fetch updated data
+        const response = await fetch(`/finance-report?month=${month}&year=${year}`);
+        const html = await response.text();
+        
+        // Create a temporary div to parse the HTML
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = html;
+        
+        // Find the table container in the new HTML
+        const newTableContainer = tempDiv.querySelector('.table-container');
+        const newTotalSection = tempDiv.querySelector('.total-summary-section');
+        const newStatsGrid = tempDiv.querySelector('.stats-grid');
+        
+        // Update the table container
+        const currentTableContainer = document.querySelector('.table-container');
+        if (currentTableContainer && newTableContainer) {
+            currentTableContainer.innerHTML = newTableContainer.innerHTML;
+        }
+        
+        // Update the total summary section
+        const currentTotalSection = document.querySelector('.total-summary-section');
+        if (currentTotalSection && newTotalSection) {
+            currentTotalSection.innerHTML = newTotalSection.innerHTML;
+        }
+        
+        // Update the stats grid
+        const currentStatsGrid = document.querySelector('.stats-grid');
+        if (currentStatsGrid && newStatsGrid) {
+            currentStatsGrid.innerHTML = newStatsGrid.innerHTML;
+        }
+        
+    } catch (error) {
+        console.error('Lỗi cập nhật bảng:', error);
+        // Fallback: reload page if update fails
+        window.location.reload();
+    }
+}
+
+// Close modal when clicking outside
+window.onclick = function(event) {
+    const addModal = document.getElementById('addFormModal');
+    const editModal = document.getElementById('editFormModal');
+    
+    if (event.target === addModal) {
+        hideAddForm();
+    } else if (event.target === editModal) {
+        hideEditForm();
+    }
+}
+</script>
+{% endblock %}

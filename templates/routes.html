@@ -20,6 +20,12 @@
             <label for="distance">Khoảng cách (km)</label>
             <input type="number" id="distance" name="distance" step="0.1" placeholder="VD: 178">
         </div>
+        <div class="form-group">
+            <label for="monthly_salary">Lương tuyến/tháng (VNĐ)</label>
+            <input type="number" id="monthly_salary" name="monthly_salary" min="0" placeholder="VD: 10500000" 
+                   oninput="formatNumberInput(this)" onblur="validateIntegerInput(this)">
+            <small class="form-help">Nhập số nguyên (ví dụ: 10,500,000 hoặc 10500000)</small>
+        </div>
         <div class="form-group" style="display: flex; align-items: end;">
             <button type="submit" class="btn btn-success">Thêm tuyến</button>
         </div>
@@ -35,6 +41,7 @@
             <th>Mã tuyến</th>
             <th>Lộ trình</th>
             <th>Khoảng cách</th>
+            <th>Lương tuyến/tháng</th>
             <th>Thao tác</th>
         </tr>
     </thead>
@@ -45,6 +52,7 @@
             <td><strong>{{ route.route_code }}</strong></td>
             <td>{{ route.route_name }}</td>
             <td>{{ route.distance }} km</td>
+            <td class="number">{{ "{:,.0f}".format(route.monthly_salary) if route.monthly_salary else "-" }} VNĐ</td>
             <td>
                 <div style="display: flex; gap: 5px;">
                     <a href="/routes/edit/{{ route.id }}" class="btn btn-sm btn-primary" style="padding: 5px 10px; font-size: 12px;">Sửa</a>
@@ -70,6 +78,7 @@
         <li>Mã tuyến phải là duy nhất trong hệ thống</li>
         <li>Lộ trình mô tả chi tiết tuyến đường vận chuyển</li>
         <li>Khoảng cách giúp tính toán chi phí vận chuyển chính xác</li>
+        <li>Lương tuyến/tháng là mức lương cố định cho tuyến này mỗi tháng</li>
         <li>Nhân viên sẽ được phân công khi ghi nhận chuyến hàng ngày</li>
     </ul>
 </div>

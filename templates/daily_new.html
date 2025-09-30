@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Chuyến hàng ngày - Hệ thống quản lý vận chuyển{% endblock %}
+{% block title %}Bảng chấm công - Hệ thống quản lý vận chuyển{% endblock %}
 
 {% block content %}
 <h2>📅 Ngày chấm công</h2>
@@ -31,60 +31,60 @@
     <form method="post" action="/daily-new/add" id="dailyForm">
         <input type="hidden" name="date" value="{{ selected_date }}">
         
-        <table class="table" style="background: white; margin-bottom: 20px;">
-            <thead>
-                <tr>
-                    <th>STT</th>
-                    <th>Mã tuyến</th>
-                    <th>Khoảng cách (km)</th>
-                    <th>Số km thực tế</th>
-                    <th>Tên lái xe</th>
-                    <th>Biển số xe</th>
-                    <th>Ghi chú</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for route in routes %}
-                <tr>
-                    <td>{{ loop.index }}</td>
-                    <td><strong>{{ route.route_code }}</strong></td>
-                    <td>{{ route.distance or 'N/A' }}</td>
-                    <td>
-                        <input type="number" 
-                               name="distance_km_{{ route.id }}" 
-                               step="0.1" 
-                               placeholder="0.0" 
-                               style="width: 80px; padding: 5px; border: 1px solid #ddd; border-radius: 3px;">
-                    </td>
-                    <td>
-                        <select name="driver_name_{{ route.id }}" style="width: 120px; padding: 5px; border: 1px solid #ddd; border-radius: 3px;">
-                            <option value="">Chọn lái xe</option>
-                            {% for employee in employees %}
-                            <option value="{{ employee.name }}">{{ employee.name }}</option>
-                            {% endfor %}
-                        </select>
-                    </td>
-                    <td>
-                        <select name="license_plate_{{ route.id }}" style="width: 120px; padding: 5px; border: 1px solid #ddd; border-radius: 3px;">
-                            <option value="">Chọn xe</option>
-                            {% for vehicle in vehicles %}
-                            <option value="{{ vehicle.license_plate }}">{{ vehicle.license_plate }}</option>
-                            {% endfor %}
-                            {% if vehicles|length == 0 %}
-                            <option value="" disabled>Không có xe</option>
-                            {% endif %}
-                        </select>
-                    </td>
-                    <td>
-                        <input type="text" 
-                               name="notes_{{ route.id }}" 
-                               placeholder="Ghi chú" 
-                               style="width: 120px; padding: 5px; border: 1px solid #ddd; border-radius: 3px;">
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <div class="table-container">
+            <table class="table" style="background: white; margin-bottom: 0;">
+                <thead>
+                    <tr>
+                        <th>STT</th>
+                        <th>Mã tuyến</th>
+                        <th>Khoảng cách (km)</th>
+                        <th>Số km thực tế</th>
+                        <th>Tên lái xe</th>
+                        <th>Biển số xe</th>
+                        <th>Ghi chú</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for route in routes %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td><strong>{{ route.route_code }}</strong></td>
+                        <td>{{ route.distance or 'N/A' }}</td>
+                        <td>
+                            <input type="number" 
+                                   name="distance_km_{{ route.id }}" 
+                                   step="0.1" 
+                                   placeholder="0.0">
+                        </td>
+                        <td>
+                            <select name="driver_name_{{ route.id }}">
+                                <option value="">Chọn lái xe</option>
+                                {% for employee in employees %}
+                                <option value="{{ employee.name }}">{{ employee.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </td>
+                        <td>
+                            <select name="license_plate_{{ route.id }}">
+                                <option value="">Chọn xe</option>
+                                {% for vehicle in vehicles %}
+                                <option value="{{ vehicle.license_plate }}">{{ vehicle.license_plate }}</option>
+                                {% endfor %}
+                                {% if vehicles|length == 0 %}
+                                <option value="" disabled>Không có xe</option>
+                                {% endif %}
+                            </select>
+                        </td>
+                        <td>
+                            <input type="text" 
+                                   name="notes_{{ route.id }}" 
+                                   placeholder="Ghi chú">
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
         
         <div style="text-align: center;">
             <button type="submit" class="btn btn-success" style="padding: 10px 30px; font-size: 16px;">
@@ -95,7 +95,28 @@
 </div>
 
 <!-- Chuyến đã ghi nhận -->
-<h3>📋 Chuyến đã ghi nhận</h3>
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+    <h3 style="margin: 0;">📋 Chuyến đã ghi nhận</h3>
+    {% if daily_routes %}
+    <button onclick="deleteAllTrips()" 
+            class="btn btn-danger" 
+            style="background: #e74c3c; color: white; padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer; font-size: 14px; transition: all 0.2s;"
+            onmouseover="this.style.background='#c0392b'; this.style.transform='scale(1.05)'"
+            onmouseout="this.style.background='#e74c3c'; this.style.transform='scale(1)'"
+            title="Xóa tất cả chuyến trong ngày">
+        🗑️ Xoá tất cả
+    </button>
+    {% endif %}
+</div>
+
+<!-- Success message for delete all -->
+{% if deleted_all == 'true' %}
+<div style="background: rgba(39, 174, 96, 0.1); padding: 15px; border-radius: 10px; margin-bottom: 15px; border-left: 4px solid #27ae60;">
+    <p style="margin: 0; color: #27ae60; font-weight: bold;">
+        ✅ Đã xoá tất cả chuyến trong ngày {{ selected_date_display }}
+    </p>
+</div>
+{% endif %}
 {% if daily_routes %}
 <div style="background: rgba(39, 174, 96, 0.1); padding: 15px; border-radius: 10px; margin-bottom: 15px;">
     <p style="margin: 0; color: #27ae60; font-weight: bold;">
@@ -103,53 +124,55 @@
     </p>
 </div>
 
-<table class="table">
-    <thead>
-        <tr>
-            <th>STT</th>
-            <th>Mã tuyến</th>
-            <th>Ngày chạy</th>
-            <th>Số km</th>
-            <th>Lái xe</th>
-            <th>Biển số xe</th>
-            <th>Ghi chú</th>
-            <th>Thao tác</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for daily_route in daily_routes %}
-        <tr>
-            <td>{{ loop.index }}</td>
-            <td><strong>{{ daily_route.route.route_code }}</strong></td>
-            <td>{{ daily_route.date.strftime('%d/%m/%Y') }}</td>
-            <td>{{ daily_route.distance_km }} km</td>
-            <td>{{ daily_route.driver_name }}</td>
-            <td>{{ daily_route.license_plate }}</td>
-            <td>{{ daily_route.notes or 'Không có' }}</td>
-            <td>
-                <div style="display: flex; gap: 5px; align-items: center;">
-                    <a href="/daily-new/edit/{{ daily_route.id }}" 
-                       class="btn btn-sm" 
-                       style="background: #3498db; color: white; padding: 3px 8px; font-size: 11px; text-decoration: none; border-radius: 3px; transition: all 0.2s;"
-                       onmouseover="this.style.background='#2980b9'; this.style.transform='scale(1.05)'"
-                       onmouseout="this.style.background='#3498db'; this.style.transform='scale(1)'"
-                       title="Sửa chuyến">
-                        ✏️ Sửa
-                    </a>
-                    <button onclick="deleteRoute({{ daily_route.id }})" 
-                            class="btn btn-sm btn-danger" 
-                            style="padding: 3px 8px; font-size: 11px; border: none; border-radius: 3px; transition: all 0.2s;"
-                            onmouseover="this.style.transform='scale(1.05)'"
-                            onmouseout="this.style.transform='scale(1)'"
-                            title="Xóa chuyến">
-                        🗑️ Xóa
-                    </button>
-                </div>
-            </td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+<div class="table-container">
+    <table class="table">
+        <thead>
+            <tr>
+                <th>STT</th>
+                <th>Mã tuyến</th>
+                <th>Ngày chạy</th>
+                <th>Số km</th>
+                <th>Lái xe</th>
+                <th>Biển số xe</th>
+                <th>Ghi chú</th>
+                <th>Thao tác</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for daily_route in daily_routes %}
+            <tr>
+                <td>{{ loop.index }}</td>
+                <td><strong>{{ daily_route.route.route_code }}</strong></td>
+                <td>{{ daily_route.date.strftime('%d/%m/%Y') }}</td>
+                <td>{{ daily_route.distance_km }} km</td>
+                <td>{{ daily_route.driver_name }}</td>
+                <td>{{ daily_route.license_plate }}</td>
+                <td>{{ daily_route.notes or 'Không có' }}</td>
+                <td>
+                    <div style="display: flex; gap: 5px; align-items: center;">
+                        <a href="/daily-new/edit/{{ daily_route.id }}" 
+                           class="btn btn-sm" 
+                           style="background: #3498db; color: white; padding: 3px 8px; font-size: 11px; text-decoration: none; border-radius: 3px; transition: all 0.2s;"
+                           onmouseover="this.style.background='#2980b9'; this.style.transform='scale(1.05)'"
+                           onmouseout="this.style.background='#3498db'; this.style.transform='scale(1)'"
+                           title="Sửa chuyến">
+                            ✏️ Sửa
+                        </a>
+                        <button onclick="deleteRoute({{ daily_route.id }})" 
+                                class="btn btn-sm btn-danger" 
+                                style="padding: 3px 8px; font-size: 11px; border: none; border-radius: 3px; transition: all 0.2s;"
+                                onmouseover="this.style.transform='scale(1.05)'"
+                                onmouseout="this.style.transform='scale(1)'"
+                                title="Xóa chuyến">
+                            🗑️ Xóa
+                        </button>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
 
 <div style="margin-top: 20px; padding: 20px; background: rgba(39, 174, 96, 0.1); border-radius: 10px; border-left: 4px solid #27ae60;">
     <h4 style="color: #27ae60; margin-bottom: 10px;">📊 Tổng kết:</h4>
@@ -197,6 +220,26 @@ function deleteRoute(routeId) {
         const form = document.createElement('form');
         form.method = 'POST';
         form.action = '/daily-new/delete/' + routeId;
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
+function deleteAllTrips() {
+    const selectedDate = '{{ selected_date_display }}';
+    if (confirm(`Bạn có chắc chắn muốn xoá tất cả các chuyến đã ghi nhận trong ngày ${selectedDate} không?`)) {
+        // Tạo form để submit DELETE request
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '/daily-new/delete-all';
+        
+        // Thêm input hidden cho ngày
+        const dateInput = document.createElement('input');
+        dateInput.type = 'hidden';
+        dateInput.name = 'date';
+        dateInput.value = '{{ selected_date }}';
+        form.appendChild(dateInput);
+        
         document.body.appendChild(form);
         form.submit();
     }

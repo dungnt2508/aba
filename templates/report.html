@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+
+{% block title %}Báo cáo tổng hợp - Hệ thống quản lý vận chuyển{% endblock %}
+
+{% block content %}
+<div style="max-width: 1200px; margin: 0 auto; padding: 20px;">
+    <h2 style="color: #2c3e50; margin-bottom: 30px; text-align: center; font-size: 28px;">
+        📊 Báo cáo tổng hợp
+    </h2>
+    
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 30px; margin-top: 40px;">
+        <!-- Card Tổng hợp đổ dầu -->
+        <div style="background: white; border: 1px solid #ddd; border-radius: 12px; padding: 30px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); transition: transform 0.3s, box-shadow 0.3s;" 
+             onmouseover="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 8px 25px rgba(0,0,0,0.15)'" 
+             onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.1)'">
+            <div style="text-align: center; margin-bottom: 20px;">
+                <div style="font-size: 48px; margin-bottom: 15px;">⛽</div>
+                <h3 style="color: #e74c3c; margin-bottom: 15px; font-size: 24px; font-weight: 600;">
+                    Tổng hợp đổ dầu
+                </h3>
+            </div>
+            <p style="color: #7f8c8d; line-height: 1.6; margin-bottom: 25px; text-align: center;">
+                Xem báo cáo chi tiết về số lần và chi phí đổ dầu theo từng xe, lái xe và thời gian.
+            </p>
+            <div style="text-align: center;">
+                <a href="/fuel-report" 
+                   style="background: linear-gradient(135deg, #e74c3c, #c0392b); color: white; padding: 12px 30px; text-decoration: none; border-radius: 25px; font-weight: 600; display: inline-block; transition: all 0.3s; box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3);"
+                   onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 6px 20px rgba(231, 76, 60, 0.4)'"
+                   onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 4px 15px rgba(231, 76, 60, 0.3)'">
+                    📈 Xem báo cáo
+                </a>
+            </div>
+        </div>
+
+        <!-- Card Thống kê tổng hợp -->
+        <div style="background: white; border: 1px solid #ddd; border-radius: 12px; padding: 30px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); transition: transform 0.3s, box-shadow 0.3s;" 
+             onmouseover="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 8px 25px rgba(0,0,0,0.15)'" 
+             onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.1)'">
+            <div style="text-align: center; margin-bottom: 20px;">
+                <div style="font-size: 48px; margin-bottom: 15px;">📊</div>
+                <h3 style="color: #3498db; margin-bottom: 15px; font-size: 24px; font-weight: 600;">
+                    Thống kê tổng hợp
+                </h3>
+            </div>
+            <p style="color: #7f8c8d; line-height: 1.6; margin-bottom: 25px; text-align: center;">
+                Xem báo cáo hoạt động vận chuyển, chi tiết từng lái xe, số chuyến và quãng đường.
+            </p>
+            <div style="text-align: center;">
+                <a href="/general-report" 
+                   style="background: linear-gradient(135deg, #3498db, #2980b9); color: white; padding: 12px 30px; text-decoration: none; border-radius: 25px; font-weight: 600; display: inline-block; transition: all 0.3s; box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);"
+                   onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 6px 20px rgba(52, 152, 219, 0.4)'"
+                   onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 4px 15px rgba(52, 152, 219, 0.3)'">
+                    📋 Xem thống kê
+                </a>
+            </div>
+        </div>
+
+        <!-- Card Tổng hợp báo cáo tài chính -->
+        <div style="background: white; border: 1px solid #ddd; border-radius: 12px; padding: 30px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); transition: transform 0.3s, box-shadow 0.3s;" 
+             onmouseover="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 8px 25px rgba(0,0,0,0.15)'" 
+             onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.1)'">
+            <div style="text-align: center; margin-bottom: 20px;">
+                <div style="font-size: 48px; margin-bottom: 15px;">💰</div>
+                <h3 style="color: #27ae60; margin-bottom: 15px; font-size: 24px; font-weight: 600;">
+                    Tổng hợp báo cáo tài chính
+                </h3>
+            </div>
+            <p style="color: #7f8c8d; line-height: 1.6; margin-bottom: 25px; text-align: center;">
+                Xem báo cáo thu chi, VAT, chiết khấu và lợi nhuận theo tháng.
+            </p>
+            <div style="text-align: center;">
+                <a href="/finance-report" 
+                   style="background: linear-gradient(135deg, #27ae60, #229954); color: white; padding: 12px 30px; text-decoration: none; border-radius: 25px; font-weight: 600; display: inline-block; transition: all 0.3s; box-shadow: 0 4px 15px rgba(39, 174, 96, 0.3);"
+                   onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 6px 20px rgba(39, 174, 96, 0.4)'"
+                   onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 4px 15px rgba(39, 174, 96, 0.3)'">
+                    💼 Xem tài chính
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Thông tin hướng dẫn -->
+    <div style="margin-top: 50px; padding: 25px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 15px; color: white;">
+        <h3 style="margin-bottom: 20px; text-align: center; font-size: 22px;">
+            💡 Hướng dẫn sử dụng
+        </h3>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+            <div style="background: rgba(255,255,255,0.1); padding: 20px; border-radius: 10px;">
+                <h4 style="margin-bottom: 10px; color: #f1c40f;">⛽ Tổng hợp đổ dầu</h4>
+                <ul style="margin: 0; padding-left: 20px; line-height: 1.6;">
+                    <li>Xem chi tiết số lần đổ dầu</li>
+                    <li>Thống kê chi phí nhiên liệu</li>
+                    <li>Báo cáo theo từng xe</li>
+                    <li>Xuất dữ liệu ra Excel</li>
+                </ul>
+            </div>
+            <div style="background: rgba(255,255,255,0.1); padding: 20px; border-radius: 10px;">
+                <h4 style="margin-bottom: 10px; color: #f1c40f;">📊 Thống kê tổng hợp</h4>
+                <ul style="margin: 0; padding-left: 20px; line-height: 1.6;">
+                    <li>Thống kê hoạt động lái xe</li>
+                    <li>Số chuyến và quãng đường</li>
+                    <li>Chi tiết từng chuyến</li>
+                    <li>Báo cáo theo thời gian</li>
+                </ul>
+            </div>
+            <div style="background: rgba(255,255,255,0.1); padding: 20px; border-radius: 10px;">
+                <h4 style="margin-bottom: 10px; color: #f1c40f;">💰 Tổng hợp báo cáo tài chính</h4>
+                <ul style="margin: 0; padding-left: 20px; line-height: 1.6;">
+                    <li>Báo cáo thu chi theo tháng</li>
+                    <li>Thống kê VAT và chiết khấu</li>
+                    <li>Tính toán lợi nhuận</li>
+                    <li>Xuất báo cáo Excel</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+@media (max-width: 768px) {
+    .container {
+        padding: 10px;
+    }
+    
+    h2 {
+        font-size: 24px !important;
+    }
+    
+    .card-grid {
+        grid-template-columns: 1fr !important;
+        gap: 20px !important;
+    }
+    
+    .card {
+        padding: 20px !important;
+    }
+    
+    .card h3 {
+        font-size: 20px !important;
+    }
+    
+    .btn {
+        padding: 10px 20px !important;
+        font-size: 14px !important;
+    }
+}
+</style>
+{% endblock %}
