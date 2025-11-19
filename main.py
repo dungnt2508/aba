@@ -1,14 +1,16 @@
-from fastapi import FastAPI, Request, Form, Depends, UploadFile, File
+from fastapi import FastAPI, Request, Form, Depends, UploadFile, File, HTTPException, status
 from fastapi.responses import HTMLResponse, RedirectResponse, Response, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from starlette.middleware.sessions import SessionMiddleware
 from sqlalchemy import create_engine, Column, Integer, String, Float, Date, DateTime, ForeignKey, and_, extract
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session, relationship
 from datetime import datetime, date
 import os
 import io
-from typing import Optional
+import re
+from typing import Optional, Tuple
 from openpyxl import Workbook, load_workbook
 from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
 from openpyxl.utils import get_column_letter
@@ -182,6 +184,17 @@ class RevenueRecord(Base):
     # Relationships
     route = relationship("Route")
 
+class Account(Base):
+    """Bảng quản lý tài khoản người dùng"""
+    __tablename__ = "accounts"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String, unique=True, nullable=False)  # Tên đăng nhập
+    password = Column(String, nullable=False)  # Mật khẩu (lưu dạng plain text, có thể hash sau)
+    role = Column(String, default="User")  # Phân quyền: Admin, User, Guest
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
 
 # Tạo bảng
 Base.metadata.create_all(bind=engine)
@@ -194,16 +207,133 @@ def get_db():
     finally:
         db.close()
 
+# Dependency để kiểm tra authentication
+def get_current_user(request: Request, db: Session = Depends(get_db)):
+    """Lấy thông tin user hiện tại từ session"""
+    user_id = request.session.get("user_id")
+    username = request.session.get("username")
+    role = request.session.get("role")
+    
+    if not user_id or not username:
+        return None
+    
+    # Verify user vẫn tồn tại trong database
+    account = db.query(Account).filter(Account.id == user_id, Account.username == username).first()
+    if not account:
+        # Clear session nếu user không tồn tại
+        request.session.clear()
+        return None
+    
+    return {
+        "id": account.id,
+        "username": account.username,
+        "role": account.role
+    }
+
+# Dependency để kiểm tra user đã đăng nhập
+def require_auth(current_user = Depends(get_current_user)):
+    """Yêu cầu user phải đăng nhập"""
+    if current_user is None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
+    return current_user
+
+# Dependency để kiểm tra quyền Admin
+def require_admin(current_user = Depends(require_auth)):
+    """Yêu cầu user phải có quyền Admin"""
+    if current_user["role"] != "Admin":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
+    return current_user
+
+# Dependency để kiểm tra quyền User hoặc Admin
+def require_user_or_admin(current_user = Depends(require_auth)):
+    """Yêu cầu user phải có quyền User hoặc Admin"""
+    if current_user["role"] not in ["User", "Admin"]:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
+    return current_user
+
+# Helper function để check user có quyền truy cập trang không
+def check_page_access(role: str, page_path: str) -> bool:
+    """Kiểm tra user có quyền truy cập trang không"""
+    # Admin có quyền truy cập tất cả
+    if role == "Admin":
+        return True
+    
+    # User chỉ được truy cập daily-new và revenue
+    if role == "User":
+        allowed_pages = ["/daily-new", "/revenue", "/login", "/logout"]
+        return page_path in allowed_pages
+    
+    # Guest không có quyền truy cập
+    return False
+
 # FastAPI app
 app = FastAPI(title="Hệ thống quản lý vận chuyển")
+
+# Thêm SessionMiddleware để quản lý session
+app.add_middleware(SessionMiddleware, secret_key="your-secret-key-change-in-production")
 
 # Mount static files
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # Templates đã được tạo ở trên với custom filters
 
+# ==================== AUTHENTICATION ROUTES ====================
+
+@app.get("/login", response_class=HTMLResponse)
+async def login_page(request: Request):
+    """Trang đăng nhập"""
+    # Nếu đã đăng nhập, redirect về trang chủ
+    if request.session.get("user_id"):
+        return RedirectResponse(url="/", status_code=303)
+    
+    return templates.TemplateResponse("login.html", {
+        "request": request,
+        "error": None
+    })
+
+@app.post("/login")
+async def login(
+    request: Request,
+    username: str = Form(...),
+    password: str = Form(...),
+    db: Session = Depends(get_db)
+):
+    """Xử lý đăng nhập"""
+    # Tìm tài khoản trong database
+    account = db.query(Account).filter(Account.username == username).first()
+    
+    # Kiểm tra tài khoản và mật khẩu
+    if not account or account.password != password:
+        return templates.TemplateResponse("login.html", {
+            "request": request,
+            "error": "Sai tài khoản hoặc mật khẩu"
+        })
+    
+    # Lưu thông tin vào session
+    request.session["user_id"] = account.id
+    request.session["username"] = account.username
+    request.session["role"] = account.role
+    
+    # Redirect về trang chủ
+    return RedirectResponse(url="/", status_code=303)
+
+@app.post("/logout")
+async def logout(request: Request):
+    """Đăng xuất"""
+    request.session.clear()
+    return RedirectResponse(url="/login", status_code=303)
+
 @app.get("/", response_class=HTMLResponse)
-async def home(request: Request, db: Session = Depends(get_db)):
+async def home(request: Request, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
+    # Nếu chưa đăng nhập, redirect về trang login
+    if current_user is None:
+        return RedirectResponse(url="/login", status_code=303)
+    
+    # Kiểm tra quyền truy cập
+    if not check_page_access(current_user["role"], "/"):
+        # User không được phép truy cập trang chủ, redirect về daily-new
+        return RedirectResponse(url="/daily-new", status_code=303)
+    
     # Lấy thống kê tổng quan
     employees_count = db.query(Employee).count()
     vehicles_count = db.query(Vehicle).count()
@@ -213,6 +343,7 @@ async def home(request: Request, db: Session = Depends(get_db)):
     
     return templates.TemplateResponse("index.html", {
         "request": request,
+        "current_user": current_user,
         "employees_count": employees_count,
         "vehicles_count": vehicles_count,
         "routes_count": routes_count,
@@ -220,14 +351,36 @@ async def home(request: Request, db: Session = Depends(get_db)):
     })
 
 @app.get("/report", response_class=HTMLResponse)
-async def report_page(request: Request):
+async def report_page(request: Request, current_user = Depends(get_current_user)):
     """Trang báo cáo tổng hợp - menu chính cho các báo cáo"""
-    return templates.TemplateResponse("report.html", {"request": request})
+    # Nếu chưa đăng nhập, redirect về login
+    if current_user is None:
+        return RedirectResponse(url="/login", status_code=303)
+    
+    # Chỉ Admin mới được truy cập
+    if current_user["role"] != "Admin":
+        return RedirectResponse(url="/daily-new", status_code=303)
+    
+    return templates.TemplateResponse("report.html", {
+        "request": request,
+        "current_user": current_user
+    })
 
 @app.get("/employees", response_class=HTMLResponse)
-async def employees_page(request: Request, db: Session = Depends(get_db)):
+async def employees_page(request: Request, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
+    # Nếu chưa đăng nhập, redirect về login
+    if current_user is None:
+        return RedirectResponse(url="/login", status_code=303)
+    
+    # Chỉ Admin mới được truy cập
+    if current_user["role"] != "Admin":
+        return RedirectResponse(url="/daily-new", status_code=303)
     employees = db.query(Employee).filter(Employee.status == 1).all()
-    return templates.TemplateResponse("employees.html", {"request": request, "employees": employees})
+    return templates.TemplateResponse("employees.html", {
+        "request": request,
+        "current_user": current_user,
+        "employees": employees
+    })
 
 
 @app.get("/employees/documents/{employee_id}")
@@ -541,10 +694,22 @@ async def delete_employee_document(
         )
 
 @app.get("/vehicles", response_class=HTMLResponse)
-async def vehicles_page(request: Request, db: Session = Depends(get_db)):
+async def vehicles_page(request: Request, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
+    # Nếu chưa đăng nhập, redirect về login
+    if current_user is None:
+        return RedirectResponse(url="/login", status_code=303)
+    
+    # Chỉ Admin mới được truy cập
+    if current_user["role"] != "Admin":
+        return RedirectResponse(url="/daily-new", status_code=303)
     vehicles = db.query(Vehicle).filter(Vehicle.status == 1).all()
     today = date.today()
-    return templates.TemplateResponse("vehicles.html", {"request": request, "vehicles": vehicles, "today": today})
+    return templates.TemplateResponse("vehicles.html", {
+        "request": request,
+        "current_user": current_user,
+        "vehicles": vehicles,
+        "today": today
+    })
 
 @app.post("/vehicles/add")
 async def add_vehicle(
@@ -1038,7 +1203,14 @@ async def delete_vehicle_phu_hieu_document(
         )
 
 @app.get("/routes", response_class=HTMLResponse)
-async def routes_page(request: Request, db: Session = Depends(get_db)):
+async def routes_page(request: Request, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
+    # Nếu chưa đăng nhập, redirect về login
+    if current_user is None:
+        return RedirectResponse(url="/login", status_code=303)
+    
+    # Chỉ Admin mới được truy cập
+    if current_user["role"] != "Admin":
+        return RedirectResponse(url="/daily-new", status_code=303)
     routes = db.query(Route).filter(Route.is_active == 1, Route.status == 1).all()
     
     # Sắp xếp routes: A-Z bình thường, nhưng "Tăng Cường" đẩy xuống cuối
@@ -1058,7 +1230,8 @@ async def routes_page(request: Request, db: Session = Depends(get_db)):
     routes = sort_routes_with_tang_cuong_at_bottom(routes)
     
     return templates.TemplateResponse("routes.html", {
-        "request": request, 
+        "request": request,
+        "current_user": current_user, 
         "routes": routes
     })
 
@@ -1125,8 +1298,16 @@ async def edit_route(
 # ===== REVENUE MANAGEMENT ROUTES =====
 
 @app.get("/revenue", response_class=HTMLResponse)
-async def revenue_page(request: Request, db: Session = Depends(get_db), selected_date: Optional[str] = None, deleted_all: Optional[str] = None):
+async def revenue_page(request: Request, db: Session = Depends(get_db), selected_date: Optional[str] = None, deleted_all: Optional[str] = None, current_user = Depends(get_current_user)):
     """Trang quản lý doanh thu"""
+    # Nếu chưa đăng nhập, redirect về login
+    if current_user is None:
+        return RedirectResponse(url="/login", status_code=303)
+    
+    # Kiểm tra quyền truy cập (User hoặc Admin)
+    if not check_page_access(current_user["role"], "/revenue"):
+        return RedirectResponse(url="/daily-new", status_code=303)
+    
     today = date.today()
     
     # Xử lý ngày được chọn
@@ -1230,6 +1411,7 @@ async def revenue_page(request: Request, db: Session = Depends(get_db), selected
     
     return templates.TemplateResponse("revenue.html", {
         "request": request,
+        "current_user": current_user,
         "routes": routes_for_input,  # Routes chưa nhập doanh thu để hiển thị trong form
         "all_routes": all_routes,    # Tất cả routes để hiển thị trong bảng đã ghi nhận
         "revenue_dict": revenue_dict,
@@ -1654,7 +1836,15 @@ async def delete_daily_route(daily_route_id: int, request: Request, db: Session 
 
 # New Daily Page with simple date selection
 @app.get("/daily-new", response_class=HTMLResponse)
-async def daily_new_page(request: Request, db: Session = Depends(get_db), selected_date: Optional[str] = None, deleted_all: Optional[str] = None):
+async def daily_new_page(request: Request, db: Session = Depends(get_db), selected_date: Optional[str] = None, deleted_all: Optional[str] = None, current_user = Depends(get_current_user)):
+    # Nếu chưa đăng nhập, redirect về login
+    if current_user is None:
+        return RedirectResponse(url="/login", status_code=303)
+    
+    # Kiểm tra quyền truy cập (User hoặc Admin)
+    if not check_page_access(current_user["role"], "/daily-new"):
+        return RedirectResponse(url="/login", status_code=303)
+    
     routes = db.query(Route).filter(Route.is_active == 1, Route.status == 1).all()
     employees = db.query(Employee).filter(Employee.status == 1).all()
     vehicles = db.query(Vehicle).filter(Vehicle.status == 1).all()
@@ -1726,6 +1916,7 @@ async def daily_new_page(request: Request, db: Session = Depends(get_db), select
     
     return templates.TemplateResponse("daily_new.html", {
         "request": request,
+        "current_user": current_user,
         "routes": available_routes,  # Chỉ hiển thị tuyến chưa chấm công
         "employees": employees,
         "vehicles": vehicles,
@@ -2934,8 +3125,16 @@ async def salary_calculation_page(
     selected_month: Optional[str] = None,
     selected_employee: Optional[str] = None,
     selected_route: Optional[str] = None,
-    selected_vehicle: Optional[str] = None
+    selected_vehicle: Optional[str] = None,
+    current_user = Depends(get_current_user)
 ):
+    # Nếu chưa đăng nhập, redirect về login
+    if current_user is None:
+        return RedirectResponse(url="/login", status_code=303)
+    
+    # Chỉ Admin mới được truy cập
+    if current_user["role"] != "Admin":
+        return RedirectResponse(url="/daily-new", status_code=303)
     """Trang bảng tính lương"""
     import calendar
     
@@ -3092,6 +3291,7 @@ async def salary_calculation_page(
     # Tạo template data
     template_data = {
         "request": request,
+        "current_user": current_user,
         "salary_data": salary_data,
         "employees": employees,
         "routes": routes,
@@ -3937,6 +4137,122 @@ async def delete_finance_record(record_id: int, db: Session = Depends(get_db)):
         return JSONResponse({
             "success": False,
             "message": f"Lỗi khi xóa bản ghi: {str(e)}"
+        }, status_code=500)
+
+# ==================== ACCOUNT MANAGEMENT ====================
+
+def validate_password(password: str) -> Tuple[bool, str]:
+    """Kiểm tra mật khẩu có thỏa mãn password policy không"""
+    if len(password) < 8:
+        return False, "Mật khẩu phải có ít nhất 8 ký tự"
+    
+    if not re.search(r'[A-Z]', password):
+        return False, "Mật khẩu phải có ít nhất 1 chữ in hoa (A-Z)"
+    
+    if not re.search(r'[a-z]', password):
+        return False, "Mật khẩu phải có ít nhất 1 chữ thường (a-z)"
+    
+    if not re.search(r'[0-9]', password):
+        return False, "Mật khẩu phải có ít nhất 1 chữ số (0-9)"
+    
+    return True, ""
+
+@app.get("/accounts", response_class=HTMLResponse)
+async def accounts_page(request: Request, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
+    """Trang quản lý tài khoản - chỉ dành cho Admin"""
+    # Nếu chưa đăng nhập, redirect về login
+    if current_user is None:
+        return RedirectResponse(url="/login", status_code=303)
+    
+    # Chỉ Admin mới được truy cập
+    if current_user["role"] != "Admin":
+        return RedirectResponse(url="/daily-new", status_code=303)
+    
+    accounts = db.query(Account).order_by(Account.created_at.desc()).all()
+    return templates.TemplateResponse("account.html", {
+        "request": request,
+        "current_user": current_user,
+        "accounts": accounts
+    })
+
+@app.post("/accounts/add")
+async def add_account(
+    username: str = Form(...),
+    password: str = Form(...),
+    role: str = Form(...),
+    db: Session = Depends(get_db)
+):
+    """Thêm tài khoản mới"""
+    try:
+        # Kiểm tra username đã tồn tại chưa
+        existing_account = db.query(Account).filter(Account.username == username).first()
+        if existing_account:
+            return JSONResponse({
+                "success": False,
+                "message": "Username đã tồn tại"
+            }, status_code=400)
+        
+        # Validate password
+        is_valid, error_message = validate_password(password)
+        if not is_valid:
+            return JSONResponse({
+                "success": False,
+                "message": error_message
+            }, status_code=400)
+        
+        # Validate role
+        if role not in ["Admin", "User", "Guest"]:
+            return JSONResponse({
+                "success": False,
+                "message": "Phân quyền không hợp lệ. Chỉ chấp nhận: Admin, User, Guest"
+            }, status_code=400)
+        
+        # Tạo tài khoản mới
+        new_account = Account(
+            username=username,
+            password=password,  # Lưu plain text, có thể hash sau
+            role=role
+        )
+        db.add(new_account)
+        db.commit()
+        
+        return JSONResponse({
+            "success": True,
+            "message": "Đã thêm tài khoản thành công"
+        })
+        
+    except Exception as e:
+        db.rollback()
+        return JSONResponse({
+            "success": False,
+            "message": f"Lỗi khi thêm tài khoản: {str(e)}"
+        }, status_code=500)
+
+@app.post("/accounts/delete/{account_id}")
+async def delete_account(account_id: int, db: Session = Depends(get_db)):
+    """Xóa tài khoản"""
+    try:
+        account = db.query(Account).filter(Account.id == account_id).first()
+        
+        if not account:
+            return JSONResponse({
+                "success": False,
+                "message": "Không tìm thấy tài khoản"
+            }, status_code=404)
+        
+        db.delete(account)
+        db.commit()
+        
+        return JSONResponse({
+            "success": True,
+            "message": "Đã xóa tài khoản thành công"
+        })
+        
+    except Exception as e:
+        db.rollback()
+        return JSONResponse({
+            "success": False,
+            "message": f"Lỗi khi xóa tài khoản: {str(e)}"
         }, status_code=500)
 
 if __name__ == "__main__":
