@@ -13,8 +13,11 @@
             <input type="text" id="license_plate" name="license_plate" required placeholder="VD: 50H-448.42" value="{{ vehicle.license_plate }}">
         </div>
         <div class="form-group">
-            <label for="vehicle_info">Thông tin xe *</label>
-            <input type="text" id="vehicle_info" name="vehicle_info" required placeholder="VD: Hino 3T" value="{{ vehicle.vehicle_info or '' }}">
+            <label for="vehicle_type">Loại xe *</label>
+            <select id="vehicle_type" name="vehicle_type" required style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                <option value="Xe Nhà" {% if vehicle.vehicle_type == 'Xe Nhà' or not vehicle.vehicle_type %}selected{% endif %}>Xe Nhà</option>
+                <option value="Xe Đối tác" {% if vehicle.vehicle_type == 'Xe Đối tác' %}selected{% endif %}>Xe Đối tác</option>
+            </select>
         </div>
         <div class="form-group">
             <label for="capacity">Tải trọng (kg) *</label>

@@ -7,316 +7,380 @@
     .finance-container {
         max-width: 1600px;
         margin: 0 auto;
-        padding: 20px;
-        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        padding: 8px;
+        background: #f8fafc;
         min-height: 100vh;
     }
     
+    /* Header Section - Compact Design */
     .page-header {
-        text-align: center;
-        margin-bottom: 40px;
-        padding: 30px;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        border-radius: 20px;
+        background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
         color: white;
-        box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+        padding: 12px 20px;
+        border-radius: 8px;
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .header-left {
+        display: flex;
+        align-items: center;
+        gap: 12px;
     }
     
     .page-title {
-        font-size: 2.5rem;
+        font-size: 1.4rem;
         font-weight: 700;
         margin: 0;
-        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
     }
     
     .page-subtitle {
-        font-size: 1.1rem;
-        margin-top: 10px;
-        opacity: 0.9;
+        font-size: 0.8rem;
+        opacity: 0.8;
+        margin: 0;
     }
     
-    .filter-card {
-        background: white;
-        border-radius: 20px;
-        padding: 30px;
-        margin-bottom: 30px;
-        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
-        border: 1px solid rgba(255,255,255,0.2);
-    }
-    
-    .filter-title {
-        color: #2c3e50;
-        font-size: 1.4rem;
-        font-weight: 600;
-        margin-bottom: 20px;
+    .header-right {
         display: flex;
         align-items: center;
-        gap: 10px;
+        gap: 12px;
     }
     
-    .filter-form {
+    /* Control Bar - Inline Layout */
+    .control-bar {
+        background: white;
+        border-radius: 8px;
+        padding: 12px 16px;
+        margin-bottom: 12px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         display: flex;
-        gap: 20px;
-        align-items: end;
+        align-items: center;
+        justify-content: space-between;
         flex-wrap: wrap;
+        gap: 12px;
     }
     
-    .form-group {
+    .filter-section {
         display: flex;
-        flex-direction: column;
-        gap: 8px;
+        align-items: center;
+        gap: 12px;
+        flex: 1;
     }
     
-    .form-label {
+    .filter-label {
+        font-size: 0.85rem;
         font-weight: 600;
-        color: #555;
-        font-size: 0.95rem;
+        color: #374151;
+        white-space: nowrap;
     }
     
     .form-select {
-        padding: 12px 16px;
-        border: 2px solid #e1e8ed;
-        border-radius: 12px;
-        font-size: 1rem;
-        min-width: 140px;
-        transition: all 0.3s ease;
+        padding: 6px 10px;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        font-size: 0.85rem;
         background: white;
+        min-width: 100px;
+        transition: all 0.2s ease;
     }
     
     .form-select:focus {
         outline: none;
-        border-color: #667eea;
-        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
     }
     
     .btn-primary {
-        background: linear-gradient(135deg, #27ae60, #229954);
+        background: #3b82f6;
         color: white;
-        padding: 14px 28px;
+        padding: 6px 12px;
         border: none;
-        border-radius: 12px;
-        font-weight: 600;
+        border-radius: 6px;
+        font-weight: 500;
         cursor: pointer;
-        transition: all 0.3s ease;
-        font-size: 1rem;
-        box-shadow: 0 4px 15px rgba(39, 174, 96, 0.3);
+        transition: all 0.2s ease;
+        font-size: 0.85rem;
+        white-space: nowrap;
     }
     
     .btn-primary:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(39, 174, 96, 0.4);
+        background: #2563eb;
+        transform: translateY(-1px);
     }
     
-    .btn-secondary {
-        background: linear-gradient(135deg, #3498db, #2980b9);
-        color: white;
-        padding: 12px 24px;
-        border: none;
-        border-radius: 10px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        text-decoration: none;
-        display: inline-block;
-        box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
-    }
-    
-    .btn-secondary:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(52, 152, 219, 0.4);
+    .action-buttons {
+        display: flex;
+        align-items: center;
+        gap: 8px;
     }
     
     .btn-add {
-        background: linear-gradient(135deg, #e74c3c, #c0392b);
+        background: #10b981;
         color: white;
-        padding: 12px 24px;
+        padding: 6px 12px;
         border: none;
-        border-radius: 10px;
-        font-weight: 600;
+        border-radius: 6px;
+        font-weight: 500;
         cursor: pointer;
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3);
+        transition: all 0.2s ease;
+        font-size: 0.85rem;
+        white-space: nowrap;
     }
     
     .btn-add:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(231, 76, 60, 0.4);
+        background: #059669;
+        transform: translateY(-1px);
     }
     
-    .stats-grid {
+    .btn-secondary {
+        background: #6b7280;
+        color: white;
+        padding: 6px 12px;
+        border: none;
+        border-radius: 6px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-size: 0.85rem;
+        text-decoration: none;
+        white-space: nowrap;
+    }
+    
+    .btn-secondary:hover {
+        background: #4b5563;
+        transform: translateY(-1px);
+    }
+    
+    /* Stats Cards - Horizontal Compact */
+    .stats-container {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-        gap: 25px;
-        margin-bottom: 30px;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+        margin-bottom: 12px;
     }
     
     .stat-card {
         background: white;
-        border-radius: 20px;
-        padding: 30px;
-        text-align: center;
-        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
-        transition: all 0.3s ease;
-        border: 1px solid rgba(255,255,255,0.2);
+        border-radius: 8px;
+        padding: 12px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        border-left: 4px solid;
+        transition: all 0.2s ease;
     }
     
     .stat-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     }
     
-    .stat-icon {
-        font-size: 3rem;
-        margin-bottom: 15px;
-        display: block;
+    .stat-card.income {
+        border-left-color: #10b981;
+    }
+    
+    .stat-card.expense {
+        border-left-color: #ef4444;
+    }
+    
+    .stat-card.balance {
+        border-left-color: #3b82f6;
+    }
+    
+    .stat-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 8px;
     }
     
     .stat-title {
-        color: #2c3e50;
-        font-size: 1.1rem;
+        font-size: 0.8rem;
         font-weight: 600;
-        margin-bottom: 10px;
+        color: #6b7280;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .stat-icon {
+        font-size: 1.2rem;
     }
     
     .stat-value {
-        font-size: 2rem;
+        font-size: 1.3rem;
         font-weight: 700;
         margin: 0;
+        font-family: 'Courier New', monospace;
     }
     
-    .stat-income {
-        color: #27ae60;
+    .stat-income .stat-value {
+        color: #10b981;
     }
     
-    .stat-expense {
-        color: #e74c3c;
+    .stat-expense .stat-value {
+        color: #ef4444;
     }
     
-    .stat-balance {
-        color: #3498db;
+    .stat-balance .stat-value {
+        color: #3b82f6;
     }
     
+    /* Table Section - Modern Design */
     .table-container {
         background: white;
-        border-radius: 20px;
+        border-radius: 8px;
         overflow: hidden;
-        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
-        margin-bottom: 30px;
-    }
-    
-    .table-scroll-container {
-        max-height: 500px;
-        overflow-y: auto;
-        overflow-x: auto;
-        border: 1px solid #e1e8ed;
-        border-radius: 0 0 20px 20px;
-        position: relative;
-        /* Custom scrollbar styling */
-        scrollbar-width: thin;
-        scrollbar-color: #667eea #f8f9fa;
-    }
-    
-    .table-scroll-container::-webkit-scrollbar {
-        width: 12px;
-        height: 12px;
-    }
-    
-    .table-scroll-container::-webkit-scrollbar-track {
-        background: #f8f9fa;
-        border-radius: 6px;
-        border: 1px solid #e9ecef;
-    }
-    
-    .table-scroll-container::-webkit-scrollbar-thumb {
-        background: linear-gradient(135deg, #667eea, #764ba2);
-        border-radius: 6px;
-        border: 2px solid #f8f9fa;
-    }
-    
-    .table-scroll-container::-webkit-scrollbar-thumb:hover {
-        background: linear-gradient(135deg, #5a6fd8, #6a4190);
-    }
-    
-    .table-scroll-container::-webkit-scrollbar-corner {
-        background: #f8f9fa;
-    }
-    
-    /* Scroll indicator */
-    .table-scroll-container::after {
-        content: '';
-        position: absolute;
-        bottom: 0;
-        right: 0;
-        width: 20px;
-        height: 20px;
-        background: linear-gradient(45deg, transparent 30%, #667eea 30%, #667eea 70%, transparent 70%);
-        pointer-events: none;
-        opacity: 0.3;
-        z-index: 1;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        margin-bottom: 12px;
     }
     
     .table-header {
-        background: linear-gradient(135deg, #2c3e50, #34495e);
-        color: white;
-        padding: 25px 30px;
-        border-bottom: none;
+        background: #f8fafc;
+        border-bottom: 1px solid #e2e8f0;
+        padding: 12px 16px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
     }
     
     .table-title {
         margin: 0;
-        font-size: 1.4rem;
+        font-size: 1rem;
         font-weight: 600;
+        color: #1e293b;
         display: flex;
         align-items: center;
-        gap: 10px;
+        gap: 8px;
+    }
+    
+    .table-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .table-scroll-container {
+        max-height: 400px;
+        overflow-y: auto;
+        overflow-x: auto;
+        position: relative;
+        scrollbar-width: thin;
+        scrollbar-color: #cbd5e1 #f1f5f9;
+    }
+    
+    .table-scroll-container::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+    
+    .table-scroll-container::-webkit-scrollbar-track {
+        background: #f1f5f9;
+        border-radius: 4px;
+    }
+    
+    .table-scroll-container::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 4px;
+    }
+    
+    .table-scroll-container::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
     }
     
     .data-table {
         width: 100%;
-        border-collapse: collapse;
-        font-size: 0.95rem;
+        border-collapse: separate;
+        border-spacing: 0;
+        font-size: 0.85rem;
         min-width: 100%;
+        table-layout: auto;
     }
     
     .data-table thead th {
-        background: linear-gradient(135deg, #34495e, #2c3e50);
-        color: white;
-        padding: 18px 12px;
+        background: #f1f5f9;
+        color: #374151;
+        padding: 10px 8px;
         text-align: left;
         font-weight: 600;
-        border: none;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 1px solid #e2e8f0;
         position: sticky;
         top: 0;
         z-index: 10;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        position: -webkit-sticky;
+        position: sticky;
     }
     
     .data-table thead th.amount-header {
-        min-width: 140px;
         text-align: right;
+        min-width: 120px;
+        white-space: nowrap;
+    }
+    
+    /* Specific styling for amount header column */
+    .data-table thead th:nth-child(4) {
+        text-align: right;
+        min-width: 120px;
+        white-space: nowrap;
+    }
+    
+    /* Specific styling for description column - increased width */
+    .data-table thead th:nth-child(3) {
+        min-width: 200px;
+        max-width: 300px;
     }
     
     .data-table tbody tr {
-        border-bottom: 1px solid #f1f3f4;
-        transition: all 0.3s ease;
+        border-bottom: 1px solid #f1f5f9;
+        transition: all 0.2s ease;
+        background: white;
     }
     
     .data-table tbody tr:hover {
-        background: linear-gradient(135deg, #f8f9fa, #e9ecef);
-        transform: scale(1.01);
+        background: #f8fafc;
+    }
+    
+    .data-table tbody tr:nth-child(even) {
+        background: #fafbfc;
+    }
+    
+    .data-table tbody tr:nth-child(even):hover {
+        background: #f1f5f9;
     }
     
     .data-table tbody td {
-        padding: 16px 12px;
-        border: none;
+        padding: 10px 8px;
         vertical-align: middle;
+        border-bottom: 1px solid #f1f5f9;
+        word-wrap: break-word;
     }
     
-    .data-table tbody td.amount-column,
-    .data-table tfoot td.amount-column {
-        min-width: 140px;
+    /* Specific styling for amount column to prevent wrapping */
+    .data-table tbody td:nth-child(4) {
         white-space: nowrap;
+        min-width: 120px;
         text-align: right;
+        font-family: 'Courier New', monospace;
+        font-weight: 500;
+    }
+    
+    /* Specific styling for description column - increased width */
+    .data-table tbody td:nth-child(3) {
+        min-width: 200px;
+        max-width: 300px;
+        word-wrap: break-word;
+        word-break: break-word;
+    }
+    
+    .data-table tbody td.amount-column {
+        text-align: right;
+        font-family: 'Courier New', monospace;
+        font-weight: 500;
+        white-space: nowrap;
+        min-width: 120px;
     }
     
     .action-buttons {
@@ -327,32 +391,81 @@
         white-space: nowrap;
     }
     
-    .data-table tfoot tr {
-        background: linear-gradient(135deg, #2c3e50, #34495e);
+    .btn-edit {
+        background: #3b82f6;
         color: white;
-        font-weight: bold;
+        padding: 4px 8px;
+        border: none;
+        border-radius: 4px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-size: 0.75rem;
+        min-width: 40px;
+        height: 24px;
+        line-height: 16px;
     }
     
-    .data-table tfoot td {
-        padding: 20px 12px;
+    .btn-edit:hover {
+        background: #2563eb;
+        transform: translateY(-1px);
+    }
+    
+    .btn-delete {
+        background: #ef4444;
+        color: white;
+        padding: 4px 8px;
         border: none;
-        vertical-align: middle;
+        border-radius: 4px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-size: 0.75rem;
+        min-width: 40px;
+        height: 24px;
+        line-height: 16px;
+    }
+    
+    .btn-delete:hover {
+        background: #dc2626;
+        transform: translateY(-1px);
     }
     
     .amount-positive {
-        color: #27ae60;
+        color: #10b981;
         font-weight: 600;
-        background: rgba(39, 174, 96, 0.1);
-        padding: 4px 8px;
-        border-radius: 6px;
+        background: rgba(16, 185, 129, 0.1);
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-size: 0.8rem;
     }
     
     .amount-negative {
-        color: #e74c3c;
+        color: #ef4444;
         font-weight: 600;
-        background: rgba(231, 76, 60, 0.1);
-        padding: 4px 8px;
-        border-radius: 6px;
+        background: rgba(239, 68, 68, 0.1);
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-size: 0.8rem;
+    }
+    
+    .transaction-type {
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .transaction-type.income {
+        background: rgba(16, 185, 129, 0.1);
+        color: #10b981;
+    }
+    
+    .transaction-type.expense {
+        background: rgba(239, 68, 68, 0.1);
+        color: #ef4444;
     }
     
     .form-modal {
@@ -538,124 +651,147 @@
         margin-top: 30px;
     }
     
-    /* Total Summary Section */
-    .total-summary-section {
-        margin-top: 20px;
-        margin-bottom: 20px;
+    /* Summary Section - Compact */
+    .summary-section {
+        background: white;
+        border-radius: 8px;
+        padding: 12px 16px;
+        margin-bottom: 12px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        border-left: 4px solid #3b82f6;
     }
     
-    .total-summary-card {
-        background: linear-gradient(135deg, #2c3e50, #34495e);
-        border-radius: 12px;
-        padding: 20px;
-        box-shadow: 0 4px 15px rgba(44, 62, 80, 0.2);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-    }
-    
-    .total-summary-row {
+    .summary-row {
         display: flex;
-        justify-content: space-between;
+        justify-content: center;
         align-items: center;
-        flex-wrap: wrap;
-        gap: 20px;
+        gap: 16px;
     }
     
-    .total-label {
-        color: rgba(255, 255, 255, 0.9);
-        font-size: 1rem;
+    .summary-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        flex: 1;
+        max-width: 300px;
+    }
+    
+    .summary-label {
+        font-size: 0.75rem;
         font-weight: 600;
-        margin-right: 10px;
+        color: #6b7280;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 4px;
     }
     
-    .total-value {
-        font-size: 1.2rem;
+    .summary-value {
+        font-size: 1.1rem;
         font-weight: 700;
-        text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+        font-family: 'Courier New', monospace;
     }
     
-    .total-amount {
-        color: #3498db;
+    .summary-value.positive {
+        color: #10b981;
     }
     
-    .total-positive {
-        color: #27ae60;
-        background: rgba(39, 174, 96, 0.2);
-        padding: 4px 12px;
-        border-radius: 6px;
-        border: 1px solid rgba(39, 174, 96, 0.3);
+    .summary-value.negative {
+        color: #ef4444;
     }
     
-    .total-negative {
-        color: #e74c3c;
-        background: rgba(231, 76, 60, 0.2);
-        padding: 4px 12px;
-        border-radius: 6px;
-        border: 1px solid rgba(231, 76, 60, 0.3);
+    .summary-value.neutral {
+        color: #3b82f6;
     }
     
-    .total-neutral {
-        color: #f39c12;
-        background: rgba(243, 156, 18, 0.2);
-        padding: 4px 12px;
-        border-radius: 6px;
-        border: 1px solid rgba(243, 156, 18, 0.3);
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 40px 20px;
+        color: #6b7280;
+    }
+    
+    .empty-icon {
+        font-size: 3rem;
+        margin-bottom: 16px;
+        opacity: 0.5;
+    }
+    
+    .empty-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        margin-bottom: 8px;
+        color: #374151;
+    }
+    
+    .empty-description {
+        font-size: 0.9rem;
+        margin-bottom: 20px;
     }
     
     @media (max-width: 768px) {
         .finance-container {
-            padding: 15px;
+            padding: 4px;
+        }
+        
+        .page-header {
+            flex-direction: column;
+            gap: 8px;
+            text-align: center;
         }
         
         .page-title {
-            font-size: 2rem;
+            font-size: 1.2rem;
         }
         
-        .filter-form {
+        .control-bar {
             flex-direction: column;
             align-items: stretch;
+            gap: 8px;
         }
         
-        .form-grid {
-            grid-template-columns: 1fr;
+        .filter-section {
+            flex-wrap: wrap;
+            gap: 8px;
         }
         
-        .stats-grid {
+        .stats-container {
             grid-template-columns: 1fr;
+            gap: 6px;
         }
         
         .data-table {
-            font-size: 0.85rem;
+            font-size: 0.75rem;
         }
         
         .data-table thead th,
-        .data-table tbody td,
-        .data-table tfoot td {
-            padding: 12px 8px;
+        .data-table tbody td {
+            padding: 6px 4px;
         }
         
-        .data-table tbody td.amount-column,
-        .data-table tfoot td.amount-column {
-            min-width: 120px;
-            font-size: 0.9rem;
+        /* Ensure amount column doesn't wrap on mobile */
+        .data-table tbody td:nth-child(4) {
+            min-width: 100px;
+            font-size: 0.75rem;
         }
         
-        .data-table thead th.amount-header {
-            min-width: 120px;
+        .data-table thead th:nth-child(4) {
+            min-width: 100px;
         }
         
-        /* Mobile scroll container */
+        /* Mobile styling for description column */
+        .data-table tbody td:nth-child(3) {
+            min-width: 150px;
+            max-width: 200px;
+        }
+        
+        .data-table thead th:nth-child(3) {
+            min-width: 150px;
+            max-width: 200px;
+        }
+        
         .table-scroll-container {
-            max-height: 400px;
-            border-radius: 0 0 15px 15px;
-        }
-        
-        .table-scroll-container::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
-        }
-        
-        .table-scroll-container::-webkit-scrollbar-thumb {
-            border: 1px solid #f8f9fa;
+            max-height: 300px;
+            -webkit-overflow-scrolling: touch;
         }
         
         .action-buttons {
@@ -663,31 +799,22 @@
         }
         
         .btn-edit, .btn-delete {
-            min-width: 45px;
-            height: 26px;
-            font-size: 0.75rem;
-            padding: 3px 6px;
+            min-width: 35px;
+            height: 20px;
+            font-size: 0.7rem;
+            padding: 2px 4px;
         }
         
-        /* Mobile styles for total summary */
-        .total-summary-card {
-            padding: 15px;
-        }
-        
-        .total-summary-row {
+        .summary-row {
             flex-direction: column;
-            align-items: stretch;
-            gap: 15px;
+            gap: 8px;
         }
         
-        .total-label {
-            font-size: 0.9rem;
-            margin-right: 0;
-            margin-bottom: 5px;
-        }
-        
-        .total-value {
-            font-size: 1.1rem;
+        .summary-item {
+            flex-direction: row;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 100%;
         }
     }
 </style>
@@ -695,53 +822,57 @@
 <div class="finance-container">
     <!-- Header -->
     <div class="page-header">
-        <h1 class="page-title">💰 Tổng hợp báo cáo tài chính</h1>
-        <p class="page-subtitle">Quản lý và theo dõi thu chi doanh nghiệp</p>
+        <div class="header-left">
+            <h1 class="page-title">💰 Báo cáo tài chính</h1>
+            <p class="page-subtitle">Quản lý thu chi doanh nghiệp</p>
+        </div>
+        <div class="header-right">
+            <span class="filter-label">Tháng {{ selected_month }}/{{ selected_year }}</span>
+        </div>
     </div>
     
-    <!-- Filter Section -->
-    <div class="filter-card">
-        <h3 class="filter-title">
-            📅 Chọn tháng báo cáo
-        </h3>
-        <form method="GET" action="/finance-report" class="filter-form">
-            <div class="form-group">
-                <label class="form-label">Tháng</label>
-                <select name="month" class="form-select">
-                    <option value="1" {% if selected_month == 1 %}selected{% endif %}>Tháng 1</option>
-                    <option value="2" {% if selected_month == 2 %}selected{% endif %}>Tháng 2</option>
-                    <option value="3" {% if selected_month == 3 %}selected{% endif %}>Tháng 3</option>
-                    <option value="4" {% if selected_month == 4 %}selected{% endif %}>Tháng 4</option>
-                    <option value="5" {% if selected_month == 5 %}selected{% endif %}>Tháng 5</option>
-                    <option value="6" {% if selected_month == 6 %}selected{% endif %}>Tháng 6</option>
-                    <option value="7" {% if selected_month == 7 %}selected{% endif %}>Tháng 7</option>
-                    <option value="8" {% if selected_month == 8 %}selected{% endif %}>Tháng 8</option>
-                    <option value="9" {% if selected_month == 9 %}selected{% endif %}>Tháng 9</option>
-                    <option value="10" {% if selected_month == 10 %}selected{% endif %}>Tháng 10</option>
-                    <option value="11" {% if selected_month == 11 %}selected{% endif %}>Tháng 11</option>
-                    <option value="12" {% if selected_month == 12 %}selected{% endif %}>Tháng 12</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label class="form-label">Năm</label>
-                <select name="year" class="form-select">
-                    {% for year in range(2020, 2030) %}
-                    <option value="{{ year }}" {% if selected_year == year %}selected{% endif %}>{{ year }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <button type="submit" class="btn-primary">
-                🔍 Xem báo cáo
-            </button>
+    <!-- Control Bar -->
+    <div class="control-bar">
+        <form method="GET" action="/finance-report" class="filter-section">
+            <span class="filter-label">Báo cáo:</span>
+            <select name="month" class="form-select">
+                <option value="1" {% if selected_month == 1 %}selected{% endif %}>Tháng 1</option>
+                <option value="2" {% if selected_month == 2 %}selected{% endif %}>Tháng 2</option>
+                <option value="3" {% if selected_month == 3 %}selected{% endif %}>Tháng 3</option>
+                <option value="4" {% if selected_month == 4 %}selected{% endif %}>Tháng 4</option>
+                <option value="5" {% if selected_month == 5 %}selected{% endif %}>Tháng 5</option>
+                <option value="6" {% if selected_month == 6 %}selected{% endif %}>Tháng 6</option>
+                <option value="7" {% if selected_month == 7 %}selected{% endif %}>Tháng 7</option>
+                <option value="8" {% if selected_month == 8 %}selected{% endif %}>Tháng 8</option>
+                <option value="9" {% if selected_month == 9 %}selected{% endif %}>Tháng 9</option>
+                <option value="10" {% if selected_month == 10 %}selected{% endif %}>Tháng 10</option>
+                <option value="11" {% if selected_month == 11 %}selected{% endif %}>Tháng 11</option>
+                <option value="12" {% if selected_month == 12 %}selected{% endif %}>Tháng 12</option>
+            </select>
+            <select name="year" class="form-select">
+                {% for year in range(2020, 2030) %}
+                <option value="{{ year }}" {% if selected_year == year %}selected{% endif %}>{{ year }}</option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="btn-primary">Xem báo cáo</button>
         </form>
+        
+        <div class="action-buttons">
+            <button onclick="showAddForm()" class="btn-add">+ Thêm bản ghi</button>
+            {% if finance_data %}
+            <a href="/finance-report/export?month={{ selected_month }}&year={{ selected_year }}" class="btn-secondary">📊 Xuất Excel</a>
+            {% endif %}
+        </div>
     </div>
 
     <!-- Stats Cards -->
     {% if finance_data %}
-    <div class="stats-grid">
-        <div class="stat-card">
-            <span class="stat-icon">📈</span>
-            <h4 class="stat-title">Tổng thu</h4>
+    <div class="stats-container">
+        <div class="stat-card income">
+            <div class="stat-header">
+                <span class="stat-title">Tổng thu</span>
+                <span class="stat-icon">📈</span>
+            </div>
             <p class="stat-value stat-income">
                 {% if total_income %}
                     {{ "{:,.0f}".format(total_income) }} ₫
@@ -751,9 +882,11 @@
             </p>
         </div>
         
-        <div class="stat-card">
-            <span class="stat-icon">📉</span>
-            <h4 class="stat-title">Tổng chi</h4>
+        <div class="stat-card expense">
+            <div class="stat-header">
+                <span class="stat-title">Tổng chi</span>
+                <span class="stat-icon">📉</span>
+            </div>
             <p class="stat-value stat-expense">
                 {% if total_expense %}
                     {{ "{:,.0f}".format(total_expense) }} ₫
@@ -763,9 +896,11 @@
             </p>
         </div>
         
-        <div class="stat-card">
-            <span class="stat-icon">💰</span>
-            <h4 class="stat-title">Lợi nhuận</h4>
+        <div class="stat-card balance">
+            <div class="stat-header">
+                <span class="stat-title">Lợi nhuận</span>
+                <span class="stat-icon">💰</span>
+            </div>
             <p class="stat-value {% if total_balance and total_balance > 0 %}stat-income{% elif total_balance and total_balance < 0 %}stat-expense{% else %}stat-balance{% endif %}">
                 {% if total_balance %}
                     {{ "{:,.0f}".format(total_balance) }} ₫
@@ -777,18 +912,14 @@
     </div>
     {% endif %}
 
-    <!-- Add Button -->
-    <div style="text-align: right; margin-bottom: 20px;">
-        <button onclick="showAddForm()" class="btn-add">
-            ➕ Thêm bản ghi mới
-        </button>
-    </div>
-
     <!-- Data Table -->
     {% if finance_data %}
     <div class="table-container">
         <div class="table-header">
             <h3 class="table-title">📋 Chi tiết thu chi</h3>
+            <div class="table-actions">
+                <span class="filter-label">{{ finance_data|length }} bản ghi</span>
+            </div>
         </div>
         
         <div class="table-scroll-container">
@@ -798,11 +929,6 @@
                         <th>Ngày</th>
                         <th>Danh mục</th>
                         <th>Diễn giải</th>
-                        <th>Mã tuyến</th>
-                        <th class="amount-header">Số tiền (chưa VAT)</th>
-                        <th style="text-align: center;">VAT</th>
-                        <th style="text-align: center;">CK1</th>
-                        <th style="text-align: center;">CK2</th>
                         <th class="amount-header">Thành tiền</th>
                         <th>Ghi chú</th>
                         <th style="text-align: center;">Thao tác</th>
@@ -813,41 +939,11 @@
                     <tr>
                         <td>{{ item.date.strftime('%d/%m/%Y') if item.date else '-' }}</td>
                         <td>
-                            <span style="padding: 4px 8px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; 
-                                {% if item.transaction_type == 'Thu' %}background: rgba(39, 174, 96, 0.1); color: #27ae60;{% else %}background: rgba(231, 76, 60, 0.1); color: #e74c3c;{% endif %}">
+                            <span class="transaction-type {% if item.transaction_type == 'Thu' %}income{% else %}expense{% endif %}">
                                 {{ item.transaction_type or '-' }}
                             </span>
                         </td>
                         <td>{{ item.description or '-' }}</td>
-                        <td>{{ item.route_code or '-' }}</td>
-                        <td class="amount-column">
-                            {% if item.amount %}
-                                {{ "{:,.0f}".format(item.amount) }} ₫
-                            {% else %}
-                                -
-                            {% endif %}
-                        </td>
-                        <td style="text-align: center;">
-                            {% if item.vat %}
-                                {{ "{:.0f}".format(item.vat) }}%
-                            {% else %}
-                                0%
-                            {% endif %}
-                        </td>
-                        <td style="text-align: center;">
-                            {% if item.discount1 %}
-                                {{ "{:.1f}".format(item.discount1) }}%
-                            {% else %}
-                                0%
-                            {% endif %}
-                        </td>
-                        <td style="text-align: center;">
-                            {% if item.discount2 %}
-                                {{ "{:.1f}".format(item.discount2) }}%
-                            {% else %}
-                                0%
-                            {% endif %}
-                        </td>
                         <td class="amount-column">
                             {% if item.total %}
                                 <span class="{% if item.total > 0 %}amount-positive{% else %}amount-negative{% endif %}">
@@ -875,21 +971,12 @@
         </div>
     </div>
     
-    <!-- Total Summary Section -->
-    <div class="total-summary-section">
-        <div class="total-summary-card">
-            <div class="total-summary-row">
-                <span class="total-label">Tổng số tiền (chưa VAT):</span>
-                <span class="total-value total-amount">
-                    {% set total_amount = finance_data | sum(attribute='amount') %}
-                    {% if total_amount %}
-                        {{ "{:,.0f}".format(total_amount) }} ₫
-                    {% else %}
-                        0 ₫
-                    {% endif %}
-                </span>
-                <span class="total-label">Tổng thành tiền:</span>
-                <span class="total-value {% if total_balance and total_balance > 0 %}total-positive{% elif total_balance and total_balance < 0 %}total-negative{% else %}total-neutral{% endif %}">
+    <!-- Summary Section -->
+    <div class="summary-section">
+        <div class="summary-row">
+            <div class="summary-item">
+                <span class="summary-label">Tổng thành tiền</span>
+                <span class="summary-value {% if total_balance and total_balance > 0 %}positive{% elif total_balance and total_balance < 0 %}negative{% else %}neutral{% endif %}">
                     {% if total_balance %}
                         {{ "{:,.0f}".format(total_balance) }} ₫
                     {% else %}
@@ -913,14 +1000,6 @@
     </div>
     {% endif %}
 
-    <!-- Export Section -->
-    {% if finance_data %}
-    <div class="export-section">
-        <a href="/finance-report/export?month={{ selected_month }}&year={{ selected_year }}" class="btn-secondary">
-            📊 Xuất báo cáo Excel
-        </a>
-    </div>
-    {% endif %}
 </div>
 
 <!-- Add Form Modal -->

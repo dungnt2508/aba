@@ -57,13 +57,13 @@
         <table style="width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
             <thead>
                 <tr style="background: linear-gradient(135deg, #3498db, #2980b9); color: white;">
-                    <th style="padding: 15px; text-align: left; font-weight: 600;">Ngày chạy</th>
-                    <th style="padding: 15px; text-align: left; font-weight: 600;">Mã tuyến</th>
-                    <th style="padding: 15px; text-align: left; font-weight: 600;">Tên tuyến</th>
-                    <th style="padding: 15px; text-align: left; font-weight: 600;">Biển số xe</th>
-                    <th style="padding: 15px; text-align: right; font-weight: 600;">Km</th>
-                    <th style="padding: 15px; text-align: right; font-weight: 600;">Tải trọng (kg)</th>
-                    <th style="padding: 15px; text-align: left; font-weight: 600;">Ghi chú</th>
+                    <th style="padding: 15px; text-align: center; font-weight: 600;">Ngày chạy</th>
+                    <th style="padding: 15px; text-align: center; font-weight: 600;">Mã tuyến</th>
+                    <th style="padding: 15px; text-align: center; font-weight: 600;">Tên tuyến</th>
+                    <th style="padding: 15px; text-align: center; font-weight: 600;">Biển số xe</th>
+                    <th style="padding: 15px; text-align: center; font-weight: 600;">Km</th>
+                    <th style="padding: 15px; text-align: center; font-weight: 600;">Tải trọng (kg)</th>
+                    <th style="padding: 15px; text-align: center; font-weight: 600;">Ghi chú</th>
                 </tr>
             </thead>
             <tbody>
@@ -123,8 +123,8 @@
 </div>
 {% endif %}
 
-<!-- Thông tin hướng dẫn -->
-<div style="margin-top: 30px; padding: 20px; background: rgba(241, 196, 15, 0.1); border-radius: 10px; border-left: 4px solid #f1c40f;">
+<!-- Thông tin hướng dẫn - Đã ẩn -->
+<div style="display: none; margin-top: 30px; padding: 20px; background: rgba(241, 196, 15, 0.1); border-radius: 10px; border-left: 4px solid #f1c40f;">
     <h4 style="color: #f39c12; margin-bottom: 10px;">💡 Thông tin chi tiết:</h4>
     <div style="color: #2c3e50; line-height: 1.6;">
         <p><strong>Báo cáo chi tiết chuyến vận chuyển của {{ driver_name }}</strong></p>

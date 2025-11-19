@@ -98,6 +98,22 @@
                 <small style="color: #7f8c8d; font-size: 12px;">Chọn xe từ danh sách có sẵn</small>
             </div>
             
+            <!-- Trạng thái -->
+            <div class="form-group">
+                <label for="status" style="display: block; margin-bottom: 8px; font-weight: 600; color: #2c3e50;">
+                    Trạng thái
+                </label>
+                <select id="status" 
+                        name="status" 
+                        style="width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 14px; transition: border-color 0.3s;"
+                        onfocus="this.style.borderColor='#3498db'"
+                        onblur="this.style.borderColor='#ddd'">
+                    <option value="Online" {% if daily_route.status == 'Online' or not daily_route.status %}selected{% endif %}>Online</option>
+                    <option value="OFF" {% if daily_route.status == 'OFF' %}selected{% endif %}>OFF</option>
+                </select>
+                <small style="color: #7f8c8d; font-size: 12px;">Trạng thái hoạt động của chuyến</small>
+            </div>
+            
             <!-- Ghi chú -->
             <div class="form-group" style="grid-column: 1 / -1;">
                 <label for="notes" style="display: block; margin-bottom: 8px; font-weight: 600; color: #2c3e50;">
@@ -132,8 +148,8 @@
     </form>
 </div>
 
-<!-- Thông tin hướng dẫn -->
-<div style="margin-top: 30px; padding: 20px; background: rgba(241, 196, 15, 0.1); border-radius: 10px; border-left: 4px solid #f1c40f;">
+<!-- Thông tin hướng dẫn - Đã ẩn -->
+<div style="display: none; margin-top: 30px; padding: 20px; background: rgba(241, 196, 15, 0.1); border-radius: 10px; border-left: 4px solid #f1c40f;">
     <h4 style="color: #f39c12; margin-bottom: 10px;">💡 Hướng dẫn chỉnh sửa:</h4>
     <ul style="color: #2c3e50; line-height: 1.6;">
         <li><strong>Số km thực tế:</strong> Cập nhật quãng đường thực tế đã chạy (bắt buộc)</li>

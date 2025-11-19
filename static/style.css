@@ -191,7 +191,7 @@ body {
 .table th,
 .table td {
     padding: 10px;
-    text-align: left;
+    text-align: center;
     border-bottom: 1px solid #ddd;
     border-right: 1px solid #ddd;
 }
@@ -201,6 +201,7 @@ body {
     color: #333;
     font-weight: normal;
     font-size: 14px;
+    text-align: center;
 }
 
 .table tbody tr:hover {
@@ -978,6 +979,7 @@ body {
     z-index: 2;
     border-bottom: 2px solid #dee2e6;
     font-weight: 600;
+    text-align: center;
 }
 
 /* Optimize table row display */
@@ -986,6 +988,7 @@ body {
     padding: 8px 10px;
     font-size: 13px;
     line-height: 1.4;
+    text-align: center;
 }
 
 /* Compact form inputs in table */
@@ -1050,4 +1053,56 @@ body {
         font-size: 11px;
         min-width: 70px;
     }
+}
+
+/* ===== GLOBAL TABLE CENTER ALIGNMENT ===== */
+/* Căn giữa tất cả các bảng trong hệ thống */
+table th,
+table td {
+    text-align: center;
+}
+
+/* Đảm bảo tất cả tiêu đề bảng đều căn giữa */
+thead th,
+th {
+    text-align: center !important;
+}
+
+/* Giữ nguyên các style đặc biệt cho số tiền và các trường hợp cần thiết */
+.text-right,
+.salary-amount,
+.number,
+td.text-right,
+th.text-right {
+    text-align: right !important;
+}
+
+.text-left,
+td.text-left,
+th.text-left {
+    text-align: left !important;
+}
+
+.text-center,
+td.text-center,
+th.text-center {
+    text-align: center !important;
+}
+
+/* Đặc biệt cho các bảng có class data-table */
+.data-table th,
+.data-table td {
+    text-align: center;
+}
+
+/* Đặc biệt cho các bảng salary */
+.salary-table th,
+.salary-table td {
+    text-align: center;
+}
+
+/* Đặc biệt cho các bảng report */
+.report-table th,
+.report-table td {
+    text-align: center;
 }

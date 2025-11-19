@@ -25,10 +25,10 @@
                     <th>STT</th>
                     <th>Họ và tên</th>
                     <th>Số điện thoại</th>
-                    <th>Số bằng lái xe</th>
+                    <th>Hạng bằng lái</th>
                     <th>CCCD</th>
                     <th>Ngày sinh</th>
-                    <th>Hết hạn bằng lái</th>
+                    <th style="display: none;">Hết hạn bằng lái</th>
                     <th>Giấy tờ</th>
                     <th>Thao tác</th>
                 </tr>
@@ -42,7 +42,7 @@
                     <td>{{ employee.driving_license or 'Chưa cập nhật' }}</td>
                     <td>{{ employee.cccd or 'Chưa cập nhật' }}</td>
                     <td>{{ employee.birth_date.strftime('%d/%m/%Y') if employee.birth_date else 'Chưa cập nhật' }}</td>
-                    <td>{{ employee.license_expiry.strftime('%d/%m/%Y') if employee.license_expiry else 'Chưa cập nhật' }}</td>
+                    <td style="display: none;">{{ employee.license_expiry.strftime('%d/%m/%Y') if employee.license_expiry else 'Chưa cập nhật' }}</td>
                     <td>
                         {% set documents_list = employee.documents | from_json %}
                         {% if documents_list and documents_list|length > 0 %}
@@ -115,14 +115,14 @@
                         <input type="date" id="cccd_issue_date" name="cccd_issue_date">
                     </div>
                     <div class="form-group">
-                        <label for="driving_license">Số bằng lái xe</label>
-                        <input type="text" id="driving_license" name="driving_license" placeholder="Nhập số bằng lái xe">
+                        <label for="driving_license">Hạng bằng lái</label>
+                        <input type="text" id="driving_license" name="driving_license" placeholder="Nhập hạng bằng lái (VD: B2, C, D)">
                     </div>
                 </div>
                 
-                <div class="form-row">
+                <div class="form-row" style="display: none;">
                     <div class="form-group">
-                        <label for="license_expiry">Ngày hết hạn bằng lái xe</label>
+                        <label for="license_expiry">Ngày hết hạn bằng lái</label>
                         <input type="date" id="license_expiry" name="license_expiry">
                     </div>
                 </div>

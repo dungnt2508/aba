@@ -61,6 +61,23 @@
                     {% endfor %}
                 </select>
             </div>
+            <div class="form-group">
+                <label for="selected_vehicle">Chọn biển số xe:</label>
+                <select id="selected_vehicle" 
+                        name="selected_vehicle" 
+                        onchange="this.form.submit()"
+                        class="form-control">
+                    <option value="all" {% if selected_vehicle == "all" or not selected_vehicle %}selected{% endif %}>
+                        Tất cả xe
+                    </option>
+                    {% for vehicle in vehicles %}
+                    <option value="{{ vehicle.license_plate }}" 
+                            {% if selected_vehicle == vehicle.license_plate %}selected{% endif %}>
+                        {{ vehicle.license_plate }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
             <div class="export-group">
                 <button type="button" onclick="exportToExcel()" class="export-btn">
                     📊 Xuất Excel
@@ -126,8 +143,8 @@
                     <th>Ngày chạy</th>
                     <th>Biển số xe</th>
                     <th>Số km</th>
-                    <th>Lương chuyến</th>
-                    <th>Loại lương</th>
+                    <th>Lương chuyến (XN)</th>
+                    <th>Lương chuyến (XĐT)</th>
                 </tr>
             </thead>
             <tbody>
@@ -150,17 +167,25 @@
                         {% endif %}
                     </td>
                     <td class="text-right salary-amount">
-                        {% if item.daily_salary > 0 %}
-                            {{ "{:,.0f}".format(item.daily_salary) }} VNĐ
-                        {% else %}
+                        {% if item.vehicle_type == 'Xe Đối tác' %}
                             –
+                        {% else %}
+                            {% if item.daily_salary > 0 %}
+                                {{ "{:,.0f}".format(item.daily_salary) }} VNĐ
+                            {% else %}
+                                –
+                            {% endif %}
                         {% endif %}
                     </td>
-                    <td class="text-center">
-                        {% if item.salary_type == 'tang_cuong' %}
-                            <span class="salary-type-badge tang-cuong-badge">Tăng Cường</span>
+                    <td class="text-right salary-amount">
+                        {% if item.vehicle_type == 'Xe Đối tác' %}
+                            {% if item.daily_salary > 0 %}
+                                {{ "{:,.0f}".format(item.daily_salary) }} VNĐ
+                            {% else %}
+                                –
+                            {% endif %}
                         {% else %}
-                            <span class="salary-type-badge standard-badge">Chuẩn</span>
+                            –
                         {% endif %}
                     </td>
                 </tr>
@@ -169,8 +194,14 @@
             <tfoot>
                 <tr class="total-row">
                     <td colspan="6"><strong>TỔNG CỘNG</strong></td>
-                    <td class="text-right"><strong>{{ "{:,.0f}".format(total_salary) }} VNĐ</strong></td>
-                    <td></td>
+                    <td class="text-right"><strong>
+                        {% set total_xn_salary = salary_data | selectattr('vehicle_type', 'ne', 'Xe Đối tác') | sum(attribute='daily_salary') %}
+                        {{ "{:,.0f}".format(total_xn_salary) }} VNĐ
+                    </strong></td>
+                    <td class="text-right"><strong>
+                        {% set total_xdt_salary = salary_data | selectattr('vehicle_type', 'equalto', 'Xe Đối tác') | sum(attribute='daily_salary') %}
+                        {{ "{:,.0f}".format(total_xdt_salary) }} VNĐ
+                    </strong></td>
                 </tr>
             </tfoot>
         </table>
@@ -889,6 +920,7 @@ function exportToExcel() {
     const selectedMonth = urlParams.get('selected_month') || '{{ selected_month }}';
     const selectedEmployee = urlParams.get('selected_employee') || '{{ selected_employee }}';
     const selectedRoute = urlParams.get('selected_route') || '{{ selected_route }}';
+    const selectedVehicle = urlParams.get('selected_vehicle') || '{{ selected_vehicle }}';
     
     // Tạo URL xuất Excel
     let exportUrl = '/salary-calculation/export-excel?';
@@ -900,6 +932,9 @@ function exportToExcel() {
     }
     if (selectedRoute && selectedRoute !== 'all') {
         exportUrl += `&selected_route=${selectedRoute}`;
+    }
+    if (selectedVehicle && selectedVehicle !== 'all') {
+        exportUrl += `&selected_vehicle=${selectedVehicle}`;
     }
     
     // Hiển thị loading

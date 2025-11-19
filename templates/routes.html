@@ -38,9 +38,9 @@
     <thead>
         <tr>
             <th>STT</th>
-            <th>Mã tuyến</th>
+            <th style="width: 150px;">Mã tuyến</th>
             <th>Lộ trình</th>
-            <th>Khoảng cách</th>
+            <th>Khoảng cách (KM)</th>
             <th>Lương tuyến/tháng</th>
             <th>Thao tác</th>
         </tr>
@@ -49,10 +49,10 @@
         {% for route in routes %}
         <tr>
             <td>{{ loop.index }}</td>
-            <td><strong>{{ route.route_code }}</strong></td>
+            <td style="white-space: nowrap;"><strong>{{ route.route_code }}</strong></td>
             <td>{{ route.route_name }}</td>
-            <td>{{ route.distance }} km</td>
-            <td class="number">{{ "{:,.0f}".format(route.monthly_salary) if route.monthly_salary else "-" }} VNĐ</td>
+            <td>{{ "{:,.0f}".format(route.distance) if route.distance else "-" }}</td>
+            <td class="number">{{ "{:,.0f}".format(route.monthly_salary) if route.monthly_salary else "-" }}</td>
             <td>
                 <div style="display: flex; gap: 5px;">
                     <a href="/routes/edit/{{ route.id }}" class="btn btn-sm btn-primary" style="padding: 5px 10px; font-size: 12px;">Sửa</a>
@@ -72,7 +72,8 @@
 </div>
 {% endif %}
 
-<div style="margin-top: 30px; padding: 20px; background: rgba(241, 196, 15, 0.1); border-radius: 10px; border-left: 4px solid #f1c40f;">
+<!-- Lưu ý - Đã ẩn -->
+<div style="display: none; margin-top: 30px; padding: 20px; background: rgba(241, 196, 15, 0.1); border-radius: 10px; border-left: 4px solid #f1c40f;">
     <h4 style="color: #f39c12; margin-bottom: 10px;">💡 Lưu ý:</h4>
     <ul style="color: #2c3e50; line-height: 1.6;">
         <li>Mã tuyến phải là duy nhất trong hệ thống</li>

@@ -3,145 +3,226 @@
 {% block title %}Báo cáo tổng hợp - Hệ thống quản lý vận chuyển{% endblock %}
 
 {% block content %}
-<div style="max-width: 1200px; margin: 0 auto; padding: 20px;">
-    <h2 style="color: #2c3e50; margin-bottom: 30px; text-align: center; font-size: 28px;">
-        📊 Báo cáo tổng hợp
-    </h2>
+<div class="report-container">
+    <div class="page-header">
+        <h2>📊 Báo cáo tổng hợp</h2>
+        <p>Chọn loại báo cáo bạn muốn xem</p>
+    </div>
     
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 30px; margin-top: 40px;">
-        <!-- Card Tổng hợp đổ dầu -->
-        <div style="background: white; border: 1px solid #ddd; border-radius: 12px; padding: 30px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); transition: transform 0.3s, box-shadow 0.3s;" 
-             onmouseover="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 8px 25px rgba(0,0,0,0.15)'" 
-             onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.1)'">
-            <div style="text-align: center; margin-bottom: 20px;">
-                <div style="font-size: 48px; margin-bottom: 15px;">⛽</div>
-                <h3 style="color: #e74c3c; margin-bottom: 15px; font-size: 24px; font-weight: 600;">
-                    Tổng hợp đổ dầu
-                </h3>
-            </div>
-            <p style="color: #7f8c8d; line-height: 1.6; margin-bottom: 25px; text-align: center;">
-                Xem báo cáo chi tiết về số lần và chi phí đổ dầu theo từng xe, lái xe và thời gian.
-            </p>
-            <div style="text-align: center;">
-                <a href="/fuel-report" 
-                   style="background: linear-gradient(135deg, #e74c3c, #c0392b); color: white; padding: 12px 30px; text-decoration: none; border-radius: 25px; font-weight: 600; display: inline-block; transition: all 0.3s; box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3);"
-                   onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 6px 20px rgba(231, 76, 60, 0.4)'"
-                   onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 4px 15px rgba(231, 76, 60, 0.3)'">
-                    📈 Xem báo cáo
-                </a>
+    <div class="report-grid">
+        <!-- Báo cáo đổ dầu -->
+        <div class="report-card">
+            <div class="card-icon">⛽</div>
+            <div class="card-content">
+                <h3>Tổng hợp đổ dầu</h3>
+                <p>Báo cáo chi tiết về số lần và chi phí đổ dầu theo từng xe</p>
+                <a href="/fuel-report" class="btn btn-primary">Xem báo cáo</a>
             </div>
         </div>
 
-        <!-- Card Thống kê tổng hợp -->
-        <div style="background: white; border: 1px solid #ddd; border-radius: 12px; padding: 30px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); transition: transform 0.3s, box-shadow 0.3s;" 
-             onmouseover="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 8px 25px rgba(0,0,0,0.15)'" 
-             onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.1)'">
-            <div style="text-align: center; margin-bottom: 20px;">
-                <div style="font-size: 48px; margin-bottom: 15px;">📊</div>
-                <h3 style="color: #3498db; margin-bottom: 15px; font-size: 24px; font-weight: 600;">
-                    Thống kê tổng hợp
-                </h3>
-            </div>
-            <p style="color: #7f8c8d; line-height: 1.6; margin-bottom: 25px; text-align: center;">
-                Xem báo cáo hoạt động vận chuyển, chi tiết từng lái xe, số chuyến và quãng đường.
-            </p>
-            <div style="text-align: center;">
-                <a href="/general-report" 
-                   style="background: linear-gradient(135deg, #3498db, #2980b9); color: white; padding: 12px 30px; text-decoration: none; border-radius: 25px; font-weight: 600; display: inline-block; transition: all 0.3s; box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);"
-                   onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 6px 20px rgba(52, 152, 219, 0.4)'"
-                   onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 4px 15px rgba(52, 152, 219, 0.3)'">
-                    📋 Xem thống kê
-                </a>
+        <!-- Thống kê tổng hợp -->
+        <div class="report-card">
+            <div class="card-icon">📊</div>
+            <div class="card-content">
+                <h3>Thống kê tổng hợp</h3>
+                <p>Báo cáo hoạt động vận chuyển, chi tiết từng lái xe và số chuyến</p>
+                <a href="/general-report" class="btn btn-info">Xem thống kê</a>
             </div>
         </div>
 
-        <!-- Card Tổng hợp báo cáo tài chính -->
-        <div style="background: white; border: 1px solid #ddd; border-radius: 12px; padding: 30px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); transition: transform 0.3s, box-shadow 0.3s;" 
-             onmouseover="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 8px 25px rgba(0,0,0,0.15)'" 
-             onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.1)'">
-            <div style="text-align: center; margin-bottom: 20px;">
-                <div style="font-size: 48px; margin-bottom: 15px;">💰</div>
-                <h3 style="color: #27ae60; margin-bottom: 15px; font-size: 24px; font-weight: 600;">
-                    Tổng hợp báo cáo tài chính
-                </h3>
-            </div>
-            <p style="color: #7f8c8d; line-height: 1.6; margin-bottom: 25px; text-align: center;">
-                Xem báo cáo thu chi, VAT, chiết khấu và lợi nhuận theo tháng.
-            </p>
-            <div style="text-align: center;">
-                <a href="/finance-report" 
-                   style="background: linear-gradient(135deg, #27ae60, #229954); color: white; padding: 12px 30px; text-decoration: none; border-radius: 25px; font-weight: 600; display: inline-block; transition: all 0.3s; box-shadow: 0 4px 15px rgba(39, 174, 96, 0.3);"
-                   onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 6px 20px rgba(39, 174, 96, 0.4)'"
-                   onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 4px 15px rgba(39, 174, 96, 0.3)'">
-                    💼 Xem tài chính
-                </a>
+        <!-- Báo cáo tài chính -->
+        <div class="report-card">
+            <div class="card-icon">💰</div>
+            <div class="card-content">
+                <h3>Báo cáo tài chính</h3>
+                <p>Báo cáo thu chi, VAT, chiết khấu và lợi nhuận theo tháng</p>
+                <a href="/finance-report" class="btn btn-success">Xem tài chính</a>
             </div>
         </div>
     </div>
 
-    <!-- Thông tin hướng dẫn -->
-    <div style="margin-top: 50px; padding: 25px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 15px; color: white;">
-        <h3 style="margin-bottom: 20px; text-align: center; font-size: 22px;">
-            💡 Hướng dẫn sử dụng
-        </h3>
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
-            <div style="background: rgba(255,255,255,0.1); padding: 20px; border-radius: 10px;">
-                <h4 style="margin-bottom: 10px; color: #f1c40f;">⛽ Tổng hợp đổ dầu</h4>
-                <ul style="margin: 0; padding-left: 20px; line-height: 1.6;">
-                    <li>Xem chi tiết số lần đổ dầu</li>
-                    <li>Thống kê chi phí nhiên liệu</li>
-                    <li>Báo cáo theo từng xe</li>
-                    <li>Xuất dữ liệu ra Excel</li>
-                </ul>
+    <!-- Hướng dẫn đơn giản - Đã ẩn -->
+    <div class="guide-section" style="display: none;">
+        <h3>💡 Hướng dẫn sử dụng</h3>
+        <div class="guide-grid">
+            <div class="guide-item">
+                <strong>⛽ Tổng hợp đổ dầu:</strong>
+                <span>Xem chi tiết số lần đổ dầu, thống kê chi phí nhiên liệu theo xe</span>
             </div>
-            <div style="background: rgba(255,255,255,0.1); padding: 20px; border-radius: 10px;">
-                <h4 style="margin-bottom: 10px; color: #f1c40f;">📊 Thống kê tổng hợp</h4>
-                <ul style="margin: 0; padding-left: 20px; line-height: 1.6;">
-                    <li>Thống kê hoạt động lái xe</li>
-                    <li>Số chuyến và quãng đường</li>
-                    <li>Chi tiết từng chuyến</li>
-                    <li>Báo cáo theo thời gian</li>
-                </ul>
+            <div class="guide-item">
+                <strong>📊 Thống kê tổng hợp:</strong>
+                <span>Thống kê hoạt động lái xe, số chuyến và quãng đường</span>
             </div>
-            <div style="background: rgba(255,255,255,0.1); padding: 20px; border-radius: 10px;">
-                <h4 style="margin-bottom: 10px; color: #f1c40f;">💰 Tổng hợp báo cáo tài chính</h4>
-                <ul style="margin: 0; padding-left: 20px; line-height: 1.6;">
-                    <li>Báo cáo thu chi theo tháng</li>
-                    <li>Thống kê VAT và chiết khấu</li>
-                    <li>Tính toán lợi nhuận</li>
-                    <li>Xuất báo cáo Excel</li>
-                </ul>
+            <div class="guide-item">
+                <strong>💰 Báo cáo tài chính:</strong>
+                <span>Báo cáo thu chi, VAT, chiết khấu và tính toán lợi nhuận</span>
             </div>
         </div>
     </div>
 </div>
 
 <style>
+.report-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.page-header {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.page-header h2 {
+    color: #333;
+    font-size: 28px;
+    margin-bottom: 10px;
+}
+
+.page-header p {
+    color: #666;
+    font-size: 16px;
+}
+
+.report-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 25px;
+    margin-bottom: 40px;
+}
+
+.report-card {
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 25px;
+    text-align: center;
+    transition: box-shadow 0.2s ease;
+}
+
+.report-card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.card-icon {
+    font-size: 40px;
+    margin-bottom: 15px;
+}
+
+.card-content h3 {
+    color: #333;
+    font-size: 20px;
+    margin-bottom: 10px;
+}
+
+.card-content p {
+    color: #666;
+    font-size: 14px;
+    line-height: 1.5;
+    margin-bottom: 20px;
+}
+
+.card-content .btn {
+    padding: 10px 20px;
+    border-radius: 4px;
+    text-decoration: none;
+    font-weight: 500;
+    display: inline-block;
+    transition: background-color 0.2s ease;
+}
+
+.btn-primary {
+    background: #007bff;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #0056b3;
+}
+
+.btn-info {
+    background: #17a2b8;
+    color: white;
+}
+
+.btn-info:hover {
+    background: #138496;
+}
+
+.btn-success {
+    background: #28a745;
+    color: white;
+}
+
+.btn-success:hover {
+    background: #1e7e34;
+}
+
+.guide-section {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 25px;
+}
+
+.guide-section h3 {
+    color: #333;
+    font-size: 18px;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.guide-grid {
+    display: grid;
+    gap: 15px;
+}
+
+.guide-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 15px;
+    background: white;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+}
+
+.guide-item strong {
+    color: #333;
+    min-width: 180px;
+    flex-shrink: 0;
+}
+
+.guide-item span {
+    color: #666;
+    line-height: 1.4;
+}
+
 @media (max-width: 768px) {
-    .container {
-        padding: 10px;
+    .report-container {
+        padding: 15px;
     }
     
-    h2 {
-        font-size: 24px !important;
+    .page-header h2 {
+        font-size: 24px;
     }
     
-    .card-grid {
-        grid-template-columns: 1fr !important;
-        gap: 20px !important;
+    .report-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
     }
     
-    .card {
-        padding: 20px !important;
+    .report-card {
+        padding: 20px;
     }
     
-    .card h3 {
-        font-size: 20px !important;
+    .guide-item {
+        flex-direction: column;
+        gap: 8px;
     }
     
-    .btn {
-        padding: 10px 20px !important;
-        font-size: 14px !important;
+    .guide-item strong {
+        min-width: auto;
     }
 }
 </style>

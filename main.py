@@ -10,7 +10,7 @@ import os
 import io
 from typing import Optional
 from openpyxl import Workbook, load_workbook
-from openpyxl.styles import Font, Alignment, PatternFill
+from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
 from openpyxl.utils import get_column_letter
 
 # Tạo database
@@ -57,7 +57,7 @@ class Vehicle(Base):
     
     id = Column(Integer, primary_key=True, index=True)
     license_plate = Column(String, unique=True, nullable=False)
-    vehicle_info = Column(String)  # Thông tin xe (model/loại)
+    vehicle_type = Column(String, default="Xe Nhà")  # Loại xe: "Xe Nhà" hoặc "Xe Đối tác"
     capacity = Column(Float)  # Trọng tải
     fuel_consumption = Column(Float)  # Tiêu hao nhiên liệu
     inspection_expiry = Column(Date)  # Ngày hết hạn đăng kiểm
@@ -99,6 +99,7 @@ class DailyRoute(Base):
     driver_name = Column(String)  # Tên lái xe
     license_plate = Column(String)  # Biển số xe
     employee_name = Column(String)  # Tên nhân viên
+    status = Column(String, default="Online")  # Trạng thái: Online hoặc OFF
     notes = Column(String)
     created_at = Column(DateTime, default=datetime.utcnow)
     
@@ -158,6 +159,29 @@ class FinanceTransaction(Base):
     note = Column(String)  # Ghi chú
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+class RevenueRecord(Base):
+    """Bảng quản lý doanh thu hàng ngày theo tuyến"""
+    __tablename__ = "revenue_records"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    date = Column(Date, nullable=False)  # Ngày ghi nhận doanh thu
+    route_id = Column(Integer, ForeignKey("routes.id"), nullable=False)  # ID tuyến
+    distance_km = Column(Float, default=0)  # Khoảng cách (có thể chỉnh sửa từ routes)
+    unit_price = Column(Integer, default=0)  # Đơn giá (VNĐ/km) - số nguyên
+    bridge_fee = Column(Integer, default=0)  # Phí cầu đường - số nguyên
+    loading_fee = Column(Integer, default=0)  # Phí dừng tải - số nguyên
+    late_penalty = Column(Integer, default=0)  # Trễ Ontime - số nguyên
+    status = Column(String, default="Online")  # Trạng thái: Online/Offline
+    total_amount = Column(Integer, default=0)  # Thành tiền = (Khoảng cách x Đơn giá) + Phí cầu đường + Phí dừng tải – Trễ Ontime
+    manual_total = Column(Integer, default=0)  # Thành tiền nhập thủ công (dùng khi Offline hoặc muốn ghi đè)
+    notes = Column(String)  # Ghi chú
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relationships
+    route = relationship("Route")
+
 
 # Tạo bảng
 Base.metadata.create_all(bind=engine)
@@ -525,7 +549,7 @@ async def vehicles_page(request: Request, db: Session = Depends(get_db)):
 @app.post("/vehicles/add")
 async def add_vehicle(
     license_plate: str = Form(...),
-    vehicle_info: str = Form(""),
+    vehicle_type: str = Form("Xe Nhà"),
     capacity: float = Form(0),
     fuel_consumption: float = Form(0),
     inspection_expiry: str = Form(""),
@@ -608,7 +632,7 @@ async def add_vehicle(
     
     vehicle = Vehicle(
         license_plate=license_plate,
-        vehicle_info=vehicle_info,
+        vehicle_type=vehicle_type,
         capacity=capacity,
         fuel_consumption=fuel_consumption,
         inspection_expiry=inspection_expiry_date,
@@ -639,7 +663,7 @@ async def edit_vehicle_page(request: Request, vehicle_id: int, db: Session = Dep
 async def edit_vehicle(
     vehicle_id: int,
     license_plate: str = Form(...),
-    vehicle_info: str = Form(""),
+    vehicle_type: str = Form("Xe Nhà"),
     capacity: float = Form(0),
     fuel_consumption: float = Form(0),
     inspection_expiry: str = Form(""),
@@ -746,7 +770,7 @@ async def edit_vehicle(
     
     # Update vehicle data
     vehicle.license_plate = license_plate
-    vehicle.vehicle_info = vehicle_info
+    vehicle.vehicle_type = vehicle_type
     vehicle.capacity = capacity
     vehicle.fuel_consumption = fuel_consumption
     vehicle.inspection_expiry = inspection_expiry_date
@@ -1016,6 +1040,23 @@ async def delete_vehicle_phu_hieu_document(
 @app.get("/routes", response_class=HTMLResponse)
 async def routes_page(request: Request, db: Session = Depends(get_db)):
     routes = db.query(Route).filter(Route.is_active == 1, Route.status == 1).all()
+    
+    # Sắp xếp routes: A-Z bình thường, nhưng "Tăng Cường" đẩy xuống cuối
+    def sort_routes_with_tang_cuong_at_bottom(routes):
+        # Lọc ra routes không phải "Tăng Cường"
+        normal_routes = [route for route in routes if route.route_code and route.route_code.strip() != "Tăng Cường"]
+        
+        # Lọc ra routes "Tăng Cường"
+        tang_cuong_routes = [route for route in routes if route.route_code and route.route_code.strip() == "Tăng Cường"]
+        
+        # Sắp xếp routes bình thường theo A-Z
+        normal_routes_sorted = sorted(normal_routes, key=lambda route: route.route_code.lower() if route.route_code else "")
+        
+        # Ghép lại: routes bình thường + routes "Tăng Cường"
+        return normal_routes_sorted + tang_cuong_routes
+    
+    routes = sort_routes_with_tang_cuong_at_bottom(routes)
+    
     return templates.TemplateResponse("routes.html", {
         "request": request, 
         "routes": routes
@@ -1080,6 +1121,429 @@ async def edit_route(
     
     db.commit()
     return RedirectResponse(url="/routes", status_code=303)
+
+# ===== REVENUE MANAGEMENT ROUTES =====
+
+@app.get("/revenue", response_class=HTMLResponse)
+async def revenue_page(request: Request, db: Session = Depends(get_db), selected_date: Optional[str] = None, deleted_all: Optional[str] = None):
+    """Trang quản lý doanh thu"""
+    today = date.today()
+    
+    # Xử lý ngày được chọn
+    if selected_date:
+        try:
+            filter_date = datetime.strptime(selected_date, "%Y-%m-%d").date()
+        except ValueError:
+            filter_date = today
+    else:
+        filter_date = today
+    
+    # Lấy dữ liệu doanh thu theo ngày được chọn trước
+    try:
+        revenue_records = db.query(RevenueRecord).filter(RevenueRecord.date == filter_date).all()
+        # Debug logging (comment out for production)
+        # print(f"Found {len(revenue_records)} revenue records for date {filter_date}")
+        # for record in revenue_records:
+        #     print(f"Record: Route {record.route_id}, Total: {record.total_amount}, Manual: {record.manual_total}")
+    except Exception as e:
+        print(f"Error querying revenue records: {e}")
+        revenue_records = []
+    
+    # Lấy dữ liệu từ ngày gần nhất có dữ liệu khác 0 để tự động điền
+    default_values = {}
+    try:
+        # Tìm ngày gần nhất có dữ liệu doanh thu (không phải ngày hiện tại)
+        latest_revenue_date = db.query(RevenueRecord.date).filter(
+            RevenueRecord.date < filter_date,
+            RevenueRecord.total_amount > 0
+        ).order_by(RevenueRecord.date.desc()).first()
+        
+        if latest_revenue_date:
+            latest_date = latest_revenue_date[0]
+            # Lấy tất cả records từ ngày gần nhất
+            latest_records = db.query(RevenueRecord).filter(RevenueRecord.date == latest_date).all()
+            
+            # Tạo dictionary để lưu giá trị mặc định cho từng route
+            for record in latest_records:
+                # Chỉ lấy dữ liệu từ record có total_amount > 0 (không phải offline)
+                if record.total_amount > 0:
+                    default_values[record.route_id] = {
+                        'distance_km': record.distance_km,
+                        'unit_price': record.unit_price,
+                        'bridge_fee': record.bridge_fee,
+                        'loading_fee': record.loading_fee,
+                        'late_penalty': record.late_penalty,
+                        'status': record.status,
+                        'notes': record.notes
+                    }
+    except Exception as e:
+        print(f"Error getting default values: {e}")
+        default_values = {}
+    
+    # Tạo dictionary để dễ tra cứu
+    revenue_dict = {}
+    entered_route_ids = set()
+    for record in revenue_records:
+        # Với "Tăng cường", lưu tất cả records (sẽ được xử lý riêng trong template)
+        if record.route.route_code and record.route.route_code.strip() == "Tăng Cường":
+            if record.route_id not in revenue_dict:
+                revenue_dict[record.route_id] = []
+            revenue_dict[record.route_id].append(record)
+        else:
+            # Với các tuyến khác, chỉ lưu record đầu tiên
+            if record.route_id not in revenue_dict:
+                revenue_dict[record.route_id] = record
+        entered_route_ids.add(record.route_id)
+    
+    # Lấy tất cả routes và lọc ra những routes chưa nhập doanh thu
+    all_routes = db.query(Route).filter(Route.is_active == 1, Route.status == 1).all()
+    
+    # Lọc ra routes chưa nhập doanh thu để hiển thị trong form nhập
+    # Riêng với "Tăng cường" thì luôn hiển thị để cho phép nhập nhiều chuyến
+    routes_for_input = []
+    for route in all_routes:
+        if route.route_code and route.route_code.strip() == "Tăng Cường":
+            # Luôn hiển thị "Tăng cường" để cho phép nhập nhiều chuyến
+            routes_for_input.append(route)
+        elif route.id not in entered_route_ids:
+            # Các tuyến khác chỉ hiển thị khi chưa nhập
+            routes_for_input.append(route)
+    
+    # Sắp xếp routes: A-Z bình thường, nhưng "Tăng Cường" đẩy xuống cuối
+    def sort_routes_with_tang_cuong_at_bottom(routes):
+        # Lọc ra routes không phải "Tăng Cường"
+        normal_routes = [route for route in routes if route.route_code and route.route_code.strip() != "Tăng Cường"]
+        
+        # Lọc ra routes "Tăng Cường"
+        tang_cuong_routes = [route for route in routes if route.route_code and route.route_code.strip() == "Tăng Cường"]
+        
+        # Sắp xếp routes bình thường theo A-Z
+        normal_routes_sorted = sorted(normal_routes, key=lambda route: route.route_code.lower() if route.route_code else "")
+        
+        # Ghép lại: routes bình thường + routes "Tăng Cường"
+        return normal_routes_sorted + tang_cuong_routes
+    
+    routes_for_input = sort_routes_with_tang_cuong_at_bottom(routes_for_input)
+    
+    # Giữ lại all_routes để hiển thị trong bảng doanh thu đã ghi nhận
+    all_routes = sort_routes_with_tang_cuong_at_bottom(all_routes)
+    
+    return templates.TemplateResponse("revenue.html", {
+        "request": request,
+        "routes": routes_for_input,  # Routes chưa nhập doanh thu để hiển thị trong form
+        "all_routes": all_routes,    # Tất cả routes để hiển thị trong bảng đã ghi nhận
+        "revenue_dict": revenue_dict,
+        "default_values": default_values,  # Giá trị mặc định từ ngày gần nhất
+        "filter_date": filter_date,
+        "today": today,
+        "deleted_all": deleted_all
+    })
+
+@app.post("/revenue/add")
+async def add_revenue_today(request: Request, db: Session = Depends(get_db)):
+    """Thêm doanh thu theo mã tuyến"""
+    form_data = await request.form()
+    
+    # Lấy ngày được chọn từ form
+    selected_date_str = form_data.get("date")
+    if not selected_date_str:
+        return RedirectResponse(url="/revenue", status_code=303)
+    
+    try:
+        selected_date = datetime.strptime(selected_date_str, "%Y-%m-%d").date()
+    except ValueError:
+        selected_date = date.today()
+    
+    # Lấy tất cả routes
+    routes = db.query(Route).filter(Route.is_active == 1, Route.status == 1).all()
+    
+    # Xử lý từng route
+    for route in routes:
+        route_id = route.id
+        
+        # Lấy dữ liệu từ form cho route này
+        distance_km = form_data.get(f"distance_km_{route_id}")
+        unit_price = form_data.get(f"unit_price_{route_id}")
+        bridge_fee = form_data.get(f"bridge_fee_{route_id}")
+        loading_fee = form_data.get(f"loading_fee_{route_id}")
+        late_penalty = form_data.get(f"late_penalty_{route_id}")
+        status = form_data.get(f"status_{route_id}")
+        manual_total = form_data.get(f"manual_total_{route_id}")
+        notes = form_data.get(f"notes_{route_id}")
+        
+        # Kiểm tra xem có dữ liệu để lưu không (bao gồm cả khi chỉ chọn status khác Online)
+        has_data = (distance_km and distance_km.strip()) or \
+                   (unit_price and unit_price.strip()) or \
+                   (bridge_fee and bridge_fee.strip()) or \
+                   (loading_fee and loading_fee.strip()) or \
+                   (late_penalty and late_penalty.strip()) or \
+                   (manual_total and manual_total.strip()) or \
+                   (notes and notes.strip()) or \
+                   (status and status != "Online")
+        
+        # Debug logging (comment out for production)
+        # print(f"Route {route_id} ({route.route_code}): distance={distance_km}, price={unit_price}, bridge={bridge_fee}, loading={loading_fee}, late={late_penalty}, status={status}, manual={manual_total}, notes={notes}")
+        # print(f"Has data: {has_data}")
+        
+        if has_data:
+            # Với "Tăng cường", luôn tạo record mới để cho phép nhiều chuyến
+            # Với các tuyến khác, kiểm tra existing record
+            existing_record = None
+            if not (route.route_code and route.route_code.strip() == "Tăng Cường"):
+                try:
+                    existing_record = db.query(RevenueRecord).filter(
+                        RevenueRecord.route_id == route_id,
+                        RevenueRecord.date == selected_date
+                    ).first()
+                except Exception as e:
+                    print(f"Error querying existing revenue record: {e}")
+                    existing_record = None
+            
+            # Xử lý giá trị dựa trên trạng thái
+            if status == "Offline":
+                # Khi Offline: tất cả trường nhập liệu = 0, chỉ giữ lại status và notes
+                distance_km_val = 0
+                unit_price_val = 0
+                bridge_fee_val = 0
+                loading_fee_val = 0
+                late_penalty_val = 0
+                manual_total_val = 0
+            else:
+                # Xử lý giá trị rỗng an toàn hơn - chuyển thành số nguyên
+                try:
+                    distance_km_val = float(distance_km) if distance_km and distance_km.strip() else 0
+                except (ValueError, AttributeError):
+                    distance_km_val = 0
+                    
+                try:
+                    unit_price_val = int(unit_price) if unit_price and unit_price.strip() else 0
+                except (ValueError, AttributeError):
+                    unit_price_val = 0
+                    
+                try:
+                    bridge_fee_val = int(bridge_fee) if bridge_fee and bridge_fee.strip() else 0
+                except (ValueError, AttributeError):
+                    bridge_fee_val = 0
+                    
+                try:
+                    loading_fee_val = int(loading_fee) if loading_fee and loading_fee.strip() else 0
+                except (ValueError, AttributeError):
+                    loading_fee_val = 0
+                    
+                try:
+                    late_penalty_val = int(late_penalty) if late_penalty and late_penalty.strip() else 0
+                except (ValueError, AttributeError):
+                    late_penalty_val = 0
+                    
+                try:
+                    manual_total_val = int(manual_total) if manual_total and manual_total.strip() else 0
+                except (ValueError, AttributeError):
+                    manual_total_val = 0
+            
+            # Tính thành tiền: ưu tiên manual_total, nếu không có thì dùng công thức
+            if manual_total_val > 0:
+                total_amount = manual_total_val
+            elif status == "Offline":
+                total_amount = 0  # Offline mà không có manual total thì = 0
+            else:
+                # Công thức: (Khoảng cách x Đơn giá) + Phí cầu đường + Phí dừng tải – Trễ Ontime
+                total_amount = max(0, int((distance_km_val * unit_price_val) + bridge_fee_val + loading_fee_val - late_penalty_val))
+            
+            if existing_record:
+                # Cập nhật record hiện tại
+                print(f"Updating existing record for route {route.route_code}")
+                existing_record.distance_km = distance_km_val
+                existing_record.unit_price = unit_price_val
+                existing_record.bridge_fee = bridge_fee_val
+                existing_record.loading_fee = loading_fee_val
+                existing_record.late_penalty = late_penalty_val
+                existing_record.status = status or "Online"
+                existing_record.total_amount = total_amount
+                existing_record.manual_total = manual_total_val
+                existing_record.notes = notes or ""
+                existing_record.updated_at = datetime.utcnow()
+            else:
+                # Tạo record mới
+                print(f"Creating new record for route {route.route_code} with total_amount={total_amount}")
+                revenue_record = RevenueRecord(
+                    date=selected_date,
+                    route_id=route_id,
+                    distance_km=distance_km_val,
+                    unit_price=unit_price_val,
+                    bridge_fee=bridge_fee_val,
+                    loading_fee=loading_fee_val,
+                    late_penalty=late_penalty_val,
+                    status=status or "Online",
+                    total_amount=total_amount,
+                    manual_total=manual_total_val,
+                    notes=notes or ""
+                )
+                db.add(revenue_record)
+    
+    try:
+        db.commit()
+        print(f"Successfully committed revenue records for date {selected_date}")
+        
+        # Debug: Kiểm tra số lượng record đã lưu (comment out for production)
+        # saved_records = db.query(RevenueRecord).filter(RevenueRecord.date == selected_date).count()
+        # print(f"Total records saved for date {selected_date}: {saved_records}")
+        
+        # Tự động tạo bản ghi thu nhập trong finance-report
+        await create_daily_revenue_finance_record(selected_date, db)
+        
+    except Exception as e:
+        print(f"Error committing revenue records: {e}")
+        db.rollback()
+        return RedirectResponse(url="/revenue", status_code=303)
+    
+    # Redirect về trang revenue với ngày đã chọn
+    return RedirectResponse(url=f"/revenue?selected_date={selected_date.strftime('%Y-%m-%d')}", status_code=303)
+
+@app.get("/revenue/edit/{revenue_id}", response_class=HTMLResponse)
+async def edit_revenue_page(request: Request, revenue_id: int, db: Session = Depends(get_db)):
+    """Trang sửa doanh thu"""
+    try:
+        revenue_record = db.query(RevenueRecord).filter(RevenueRecord.id == revenue_id).first()
+    except Exception as e:
+        print(f"Error querying revenue record for edit: {e}")
+        return RedirectResponse(url="/revenue", status_code=303)
+    
+    if not revenue_record:
+        return RedirectResponse(url="/revenue", status_code=303)
+    
+    routes = db.query(Route).filter(Route.is_active == 1, Route.status == 1).all()
+    
+    return templates.TemplateResponse("edit_revenue.html", {
+        "request": request,
+        "revenue_record": revenue_record,
+        "routes": routes
+    })
+
+@app.post("/revenue/edit/{revenue_id}")
+async def edit_revenue(
+    revenue_id: int,
+    request: Request,
+    db: Session = Depends(get_db)
+):
+    """Cập nhật doanh thu"""
+    form_data = await request.form()
+    
+    try:
+        revenue_record = db.query(RevenueRecord).filter(RevenueRecord.id == revenue_id).first()
+    except Exception as e:
+        print(f"Error querying revenue record for update: {e}")
+        return RedirectResponse(url="/revenue", status_code=303)
+    
+    if not revenue_record:
+        return RedirectResponse(url="/revenue", status_code=303)
+    
+    # Cập nhật thông tin theo cấu trúc mới
+    status = form_data.get("status", "Online")
+    
+    # Xử lý giá trị dựa trên trạng thái
+    if status == "Offline":
+        # Khi Offline: tất cả trường nhập liệu = 0, chỉ giữ lại status và notes
+        distance_km = 0
+        unit_price = 0
+        bridge_fee = 0
+        loading_fee = 0
+        late_penalty = 0
+        manual_total = 0
+    else:
+        distance_km = float(form_data.get("distance_km", 0))
+        unit_price = int(form_data.get("unit_price", 0))
+        bridge_fee = int(form_data.get("bridge_fee", 0))
+        loading_fee = int(form_data.get("loading_fee", 0))
+        late_penalty = int(form_data.get("late_penalty", 0))
+        manual_total = int(form_data.get("manual_total", 0)) if form_data.get("manual_total") else 0
+    
+    # Tính thành tiền: ưu tiên manual_total, nếu không có thì dùng công thức
+    if manual_total > 0:
+        total_amount = manual_total
+    elif status == "Offline":
+        total_amount = 0  # Offline mà không có manual total thì = 0
+    else:
+        # Công thức: (Khoảng cách x Đơn giá) + Phí cầu đường + Phí dừng tải – Trễ Ontime
+        total_amount = max(0, int((distance_km * unit_price) + bridge_fee + loading_fee - late_penalty))
+    
+    revenue_record.distance_km = distance_km
+    revenue_record.unit_price = unit_price
+    revenue_record.bridge_fee = bridge_fee
+    revenue_record.loading_fee = loading_fee
+    revenue_record.late_penalty = late_penalty
+    revenue_record.status = status
+    revenue_record.total_amount = total_amount
+    revenue_record.manual_total = manual_total
+    revenue_record.notes = form_data.get("notes", "")
+    revenue_record.updated_at = datetime.utcnow()
+    
+    try:
+        db.commit()
+        
+        # Tự động cập nhật bản ghi thu nhập trong finance-report
+        await create_daily_revenue_finance_record(revenue_record.date, db)
+        
+    except Exception as e:
+        print(f"Error updating revenue record: {e}")
+        db.rollback()
+        return RedirectResponse(url="/revenue", status_code=303)
+    
+    return RedirectResponse(url=f"/revenue?selected_date={revenue_record.date.strftime('%Y-%m-%d')}", status_code=303)
+
+@app.post("/revenue/delete/{revenue_id}")
+async def delete_revenue(revenue_id: int, db: Session = Depends(get_db)):
+    """Xóa doanh thu"""
+    try:
+        revenue_record = db.query(RevenueRecord).filter(RevenueRecord.id == revenue_id).first()
+    except Exception as e:
+        print(f"Error querying revenue record for delete: {e}")
+        return RedirectResponse(url="/revenue", status_code=303)
+    
+    if revenue_record:
+        selected_date = revenue_record.date
+        try:
+            db.delete(revenue_record)
+            db.commit()
+            
+            # Tự động cập nhật bản ghi thu nhập trong finance-report
+            await create_daily_revenue_finance_record(selected_date, db)
+            
+            return RedirectResponse(url=f"/revenue?selected_date={selected_date.strftime('%Y-%m-%d')}", status_code=303)
+        except Exception as e:
+            print(f"Error deleting revenue record: {e}")
+            db.rollback()
+            return RedirectResponse(url="/revenue", status_code=303)
+    
+    return RedirectResponse(url="/revenue", status_code=303)
+
+@app.post("/revenue/delete-all")
+async def delete_all_revenue(request: Request, db: Session = Depends(get_db)):
+    """Xóa tất cả doanh thu trong ngày"""
+    form_data = await request.form()
+    selected_date_str = form_data.get("date")
+    
+    if not selected_date_str:
+        return RedirectResponse(url="/revenue", status_code=303)
+    
+    try:
+        selected_date = datetime.strptime(selected_date_str, "%Y-%m-%d").date()
+    except ValueError:
+        return RedirectResponse(url="/revenue", status_code=303)
+    
+    try:
+        # Xóa tất cả revenue records trong ngày
+        deleted_count = db.query(RevenueRecord).filter(RevenueRecord.date == selected_date).delete()
+        db.commit()
+        print(f"Deleted {deleted_count} revenue records for date {selected_date}")
+        
+        # Tự động cập nhật bản ghi thu nhập trong finance-report
+        await create_daily_revenue_finance_record(selected_date, db)
+        
+        return RedirectResponse(url=f"/revenue?selected_date={selected_date.strftime('%Y-%m-%d')}&deleted_all=true", status_code=303)
+    except Exception as e:
+        print(f"Error deleting all revenue records: {e}")
+        db.rollback()
+        return RedirectResponse(url=f"/revenue?selected_date={selected_date.strftime('%Y-%m-%d')}", status_code=303)
 
 @app.get("/daily", response_class=HTMLResponse)
 async def daily_page(request: Request, db: Session = Depends(get_db), selected_date: Optional[str] = None):
@@ -1227,15 +1691,49 @@ async def daily_new_page(request: Request, db: Session = Depends(get_db), select
     # Lọc chuyến đã ghi nhận theo ngày được chọn
     daily_routes = db.query(DailyRoute).filter(DailyRoute.date == filter_date).order_by(DailyRoute.created_at.desc()).all()
     
+    # Lấy danh sách route_id đã được chấm công trong ngày này
+    completed_route_ids = {daily_route.route_id for daily_route in daily_routes}
+    
+    # Lọc ra các tuyến chưa được chấm công (ẩn các tuyến đã chấm công)
+    # Ngoại trừ tuyến "Tăng Cường" - luôn hiển thị để có thể thêm nhiều chuyến
+    available_routes = []
+    for route in routes:
+        # Tuyến "Tăng Cường" luôn hiển thị
+        if route.route_code and route.route_code.strip() == "Tăng Cường":
+            available_routes.append(route)
+        # Các tuyến khác chỉ hiển thị nếu chưa được chấm công
+        elif route.id not in completed_route_ids:
+            available_routes.append(route)
+    
+    # Lấy dữ liệu chấm công trước đó để tự động điền
+    previous_assignments = {}
+    for route in available_routes:
+        # Tìm chuyến gần nhất của tuyến này (trước ngày hiện tại)
+        previous_route = db.query(DailyRoute).filter(
+            DailyRoute.route_id == route.id,
+            DailyRoute.date < filter_date,
+            DailyRoute.driver_name.isnot(None),
+            DailyRoute.driver_name != "",
+            DailyRoute.license_plate.isnot(None),
+            DailyRoute.license_plate != ""
+        ).order_by(DailyRoute.date.desc()).first()
+        
+        if previous_route:
+            previous_assignments[route.id] = {
+                'driver_name': previous_route.driver_name,
+                'license_plate': previous_route.license_plate
+            }
+    
     return templates.TemplateResponse("daily_new.html", {
         "request": request,
-        "routes": routes,
+        "routes": available_routes,  # Chỉ hiển thị tuyến chưa chấm công
         "employees": employees,
         "vehicles": vehicles,
         "daily_routes": daily_routes,
         "selected_date": filter_date.strftime('%Y-%m-%d'),
         "selected_date_display": filter_date.strftime('%d/%m/%Y'),
-        "deleted_all": deleted_all
+        "deleted_all": deleted_all,
+        "previous_assignments": previous_assignments  # Dữ liệu để tự động điền
     })
 
 @app.post("/daily-new/add")
@@ -1279,6 +1777,7 @@ async def add_daily_new_route(request: Request, db: Session = Depends(get_db)):
         distance_km = form_data.get(f"distance_km_{route_id}")
         driver_name = form_data.get(f"driver_name_{route_id}")
         license_plate = form_data.get(f"license_plate_{route_id}")
+        status = form_data.get(f"status_{route_id}")
         notes = form_data.get(f"notes_{route_id}")
         
         # Chỉ tạo record nếu có ít nhất một trường được điền
@@ -1291,6 +1790,7 @@ async def add_daily_new_route(request: Request, db: Session = Depends(get_db)):
                 driver_name=driver_name or "",
                 license_plate=license_plate or "",
                 employee_name="",  # Empty since we removed this field
+                status=status or "Online",  # Mặc định là Online
                 notes=notes or ""
             )
             db.add(daily_route)
@@ -1326,6 +1826,7 @@ async def edit_daily_new_route(
     distance_km: float = Form(0),
     driver_name: str = Form(""),
     license_plate: str = Form(""),
+    status: str = Form("Online"),
     notes: str = Form(""),
     db: Session = Depends(get_db)
 ):
@@ -1338,6 +1839,7 @@ async def edit_daily_new_route(
     daily_route.distance_km = distance_km
     daily_route.driver_name = driver_name
     daily_route.license_plate = license_plate
+    daily_route.status = status
     daily_route.notes = notes
     
     db.commit()
@@ -2431,7 +2933,8 @@ async def salary_calculation_page(
     db: Session = Depends(get_db),
     selected_month: Optional[str] = None,
     selected_employee: Optional[str] = None,
-    selected_route: Optional[str] = None
+    selected_route: Optional[str] = None,
+    selected_vehicle: Optional[str] = None
 ):
     """Trang bảng tính lương"""
     import calendar
@@ -2529,22 +3032,41 @@ async def salary_calculation_page(
                         # Nếu có nhiều biển số, hiển thị phân tách bằng dấu phẩy
                         license_plate_display = ", ".join(license_plates)
         
-        salary_data.append({
-            'driver_name': daily_route.driver_name,
-            'route_code': daily_route.route.route_code,
-            'route_name': daily_route.route.route_name,
-            'date': daily_route.date,
-            'license_plate': license_plate_display,
-            'daily_salary': daily_salary,
-            'monthly_salary': daily_route.route.monthly_salary or 0,
-            'days_in_month': 30,  # Chuẩn hóa tháng 30 ngày
-            'salary_type': salary_type,  # "standard" hoặc "tang_cuong"
-            'distance_km': daily_route.distance_km or 0  # Số km thực tế cho tuyến Tăng Cường
-        })
+        # Kiểm tra filter theo biển số xe
+        should_include = True
+        if selected_vehicle and selected_vehicle != "all":
+            # Chỉ bao gồm nếu biển số xe khớp với filter
+            if selected_vehicle not in license_plate_display:
+                should_include = False
+        
+        if should_include:
+            # Lấy thông tin loại xe dựa trên biển số xe
+            vehicle_type = "Xe Nhà"  # Mặc định
+            if license_plate_display and license_plate_display != "Chưa cập nhật":
+                # Lấy biển số xe đầu tiên nếu có nhiều biển số
+                first_license_plate = license_plate_display.split(", ")[0]
+                vehicle = db.query(Vehicle).filter(Vehicle.license_plate == first_license_plate).first()
+                if vehicle and vehicle.vehicle_type:
+                    vehicle_type = vehicle.vehicle_type
+            
+            salary_data.append({
+                'driver_name': daily_route.driver_name,
+                'route_code': daily_route.route.route_code,
+                'route_name': daily_route.route.route_name,
+                'date': daily_route.date,
+                'license_plate': license_plate_display,
+                'vehicle_type': vehicle_type,  # Thêm thông tin loại xe
+                'daily_salary': daily_salary,
+                'monthly_salary': daily_route.route.monthly_salary or 0,
+                'days_in_month': 30,  # Chuẩn hóa tháng 30 ngày
+                'salary_type': salary_type,  # "standard" hoặc "tang_cuong"
+                'distance_km': daily_route.distance_km or 0  # Số km thực tế cho tuyến Tăng Cường
+            })
     
-    # Lấy danh sách lái xe và tuyến để hiển thị
+    # Lấy danh sách lái xe, tuyến và xe để hiển thị
     employees = db.query(Employee).filter(Employee.status == 1).all()
     routes = db.query(Route).filter(Route.is_active == 1, Route.status == 1).all()
+    vehicles = db.query(Vehicle).filter(Vehicle.status == 1).all()
     
     # Sắp xếp routes: A-Z bình thường, nhưng "Tăng Cường" đẩy xuống cuối
     def sort_routes_with_tang_cuong_at_bottom(routes):
@@ -2573,10 +3095,12 @@ async def salary_calculation_page(
         "salary_data": salary_data,
         "employees": employees,
         "routes": routes,
+        "vehicles": vehicles,
         "selected_month": f"{year}-{month:02d}",
         "selected_month_display": f"{month}/{year}",
         "selected_employee": selected_employee or "all",
         "selected_route": selected_route or "all",
+        "selected_vehicle": selected_vehicle or "all",
         "days_in_month": days_in_month,
         "total_trips": len(salary_data),
         "total_salary": total_salary,
@@ -2591,7 +3115,8 @@ async def export_salary_calculation_excel(
     db: Session = Depends(get_db),
     selected_month: Optional[str] = None,
     selected_employee: Optional[str] = None,
-    selected_route: Optional[str] = None
+    selected_route: Optional[str] = None,
+    selected_vehicle: Optional[str] = None
 ):
     """Xuất Excel bảng tính lương"""
     import calendar
@@ -2680,16 +3205,34 @@ async def export_salary_calculation_excel(
                     else:
                         license_plate_display = ", ".join(license_plates)
         
-        salary_data.append({
-            'driver_name': daily_route.driver_name,
-            'route_code': daily_route.route.route_code,
-            'route_name': daily_route.route.route_name,
-            'date': daily_route.date,
-            'license_plate': license_plate_display,
-            'daily_salary': daily_salary,
-            'salary_type': salary_type,  # "standard" hoặc "tang_cuong"
-            'distance_km': daily_route.distance_km or 0  # Số km thực tế cho tuyến Tăng Cường
-        })
+        # Kiểm tra filter theo biển số xe
+        should_include = True
+        if selected_vehicle and selected_vehicle != "all":
+            # Chỉ bao gồm nếu biển số xe khớp với filter
+            if selected_vehicle not in license_plate_display:
+                should_include = False
+        
+        if should_include:
+            # Lấy thông tin loại xe dựa trên biển số xe
+            vehicle_type = "Xe Nhà"  # Mặc định
+            if license_plate_display and license_plate_display != "Chưa cập nhật":
+                # Lấy biển số xe đầu tiên nếu có nhiều biển số
+                first_license_plate = license_plate_display.split(", ")[0]
+                vehicle = db.query(Vehicle).filter(Vehicle.license_plate == first_license_plate).first()
+                if vehicle and vehicle.vehicle_type:
+                    vehicle_type = vehicle.vehicle_type
+            
+            salary_data.append({
+                'driver_name': daily_route.driver_name,
+                'route_code': daily_route.route.route_code,
+                'route_name': daily_route.route.route_name,
+                'date': daily_route.date,
+                'license_plate': license_plate_display,
+                'vehicle_type': vehicle_type,  # Thêm thông tin loại xe
+                'daily_salary': daily_salary,
+                'salary_type': salary_type,  # "standard" hoặc "tang_cuong"
+                'distance_km': daily_route.distance_km or 0  # Số km thực tế cho tuyến Tăng Cường
+            })
     
     # Tạo workbook Excel
     wb = Workbook()
@@ -2702,14 +3245,14 @@ async def export_salary_calculation_excel(
     header_alignment = Alignment(horizontal="center", vertical="center")
     
     # Tiêu đề báo cáo
-    ws.merge_cells('A1:F1')
+    ws.merge_cells('A1:H1')
     ws['A1'] = "BẢNG TÍNH LƯƠNG"
     ws['A1'].font = Font(bold=True, size=16)
     ws['A1'].alignment = Alignment(horizontal="center")
     
     # Thông tin tháng
     month_text = f"Tháng: {month}/{year}"
-    ws.merge_cells('A2:F2')
+    ws.merge_cells('A2:H2')
     ws['A2'] = month_text
     ws['A2'].alignment = Alignment(horizontal="center")
     ws['A2'].font = Font(italic=True)
@@ -2717,7 +3260,7 @@ async def export_salary_calculation_excel(
     # Header bảng
     headers = [
         "STT", "Họ và tên lái xe", "Mã tuyến", 
-        "Ngày chạy", "Biển số xe", "Lương chuyến (VNĐ)"
+        "Ngày chạy", "Biển số xe", "Số km", "Lương chuyến (XN)", "Lương chuyến (XĐT)"
     ]
     
     for col, header in enumerate(headers, 1):
@@ -2733,27 +3276,48 @@ async def export_salary_calculation_excel(
         ws.cell(row=row, column=3, value=item['route_code'])  # Mã tuyến
         ws.cell(row=row, column=4, value=item['date'].strftime('%d/%m/%Y'))  # Ngày chạy
         ws.cell(row=row, column=5, value=item['license_plate'])  # Biển số xe
-        ws.cell(row=row, column=6, value=item['daily_salary'])  # Lương chuyến
+        
+        # Số km - chỉ hiển thị cho tuyến Tăng Cường
+        if item['salary_type'] == 'tang_cuong' and item['distance_km'] > 0:
+            ws.cell(row=row, column=6, value=item['distance_km'])
+        else:
+            ws.cell(row=row, column=6, value='')
+        
+        # Lương chuyến theo loại xe
+        if item.get('vehicle_type') == 'Xe Đối tác':
+            ws.cell(row=row, column=7, value='')  # Lương chuyến (XN) - trống
+            ws.cell(row=row, column=8, value=item['daily_salary'])  # Lương chuyến (XĐT)
+        else:
+            ws.cell(row=row, column=7, value=item['daily_salary'])  # Lương chuyến (XN)
+            ws.cell(row=row, column=8, value='')  # Lương chuyến (XĐT) - trống
     
-    # Định dạng số cho cột lương
+    # Định dạng số cho các cột
     for row in range(5, 5 + len(salary_data)):
-        ws.cell(row=row, column=6).number_format = '#,##0'  # Định dạng số VNĐ
+        ws.cell(row=row, column=6).number_format = '#,##0.0'  # Số km - 1 chữ số thập phân
+        ws.cell(row=row, column=7).number_format = '#,##0'  # Lương chuyến (XN)
+        ws.cell(row=row, column=8).number_format = '#,##0'  # Lương chuyến (XĐT)
     
     # Dòng tổng cộng
     if salary_data:
         total_row = 5 + len(salary_data)
-        total_salary = sum(item['daily_salary'] for item in salary_data)
+        total_xn_salary = sum(item['daily_salary'] for item in salary_data if item.get('vehicle_type') != 'Xe Đối tác')
+        total_xdt_salary = sum(item['daily_salary'] for item in salary_data if item.get('vehicle_type') == 'Xe Đối tác')
         
         ws.cell(row=total_row, column=1, value="TỔNG CỘNG").font = Font(bold=True)
         ws.cell(row=total_row, column=2, value="").font = Font(bold=True)
         ws.cell(row=total_row, column=3, value="").font = Font(bold=True)
         ws.cell(row=total_row, column=4, value="").font = Font(bold=True)
         ws.cell(row=total_row, column=5, value="").font = Font(bold=True)
-        ws.cell(row=total_row, column=6, value=total_salary).font = Font(bold=True)
-        ws.cell(row=total_row, column=6).number_format = '#,##0'
+        ws.cell(row=total_row, column=6, value="").font = Font(bold=True)
+        ws.cell(row=total_row, column=7, value=total_xn_salary).font = Font(bold=True)
+        ws.cell(row=total_row, column=8, value=total_xdt_salary).font = Font(bold=True)
+        
+        # Định dạng số cho dòng tổng cộng
+        ws.cell(row=total_row, column=7).number_format = '#,##0'
+        ws.cell(row=total_row, column=8).number_format = '#,##0'
     
     # Điều chỉnh độ rộng cột
-    column_widths = [8, 25, 15, 15, 20, 20]
+    column_widths = [8, 25, 15, 15, 20, 12, 18, 18]
     for col, width in enumerate(column_widths, 1):
         ws.column_dimensions[get_column_letter(col)].width = width
     
@@ -2770,6 +3334,72 @@ async def export_salary_calculation_excel(
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         headers={"Content-Disposition": f"attachment; filename*=UTF-8''{filename}"}
     )
+
+async def create_daily_revenue_finance_record(selected_date: date, db: Session):
+    """Tự động tạo/cập nhật bản ghi thu nhập trong finance-report từ doanh thu hàng ngày"""
+    try:
+        # Lấy tổng doanh thu của ngày
+        revenue_records = db.query(RevenueRecord).filter(RevenueRecord.date == selected_date).all()
+        
+        if not revenue_records:
+            print(f"No revenue records found for date {selected_date}")
+            return
+        
+        # Tính tổng doanh thu
+        total_revenue = 0
+        for record in revenue_records:
+            if record.manual_total > 0:
+                total_revenue += record.manual_total
+            else:
+                total_revenue += record.total_amount
+        
+        # Kiểm tra xem đã có bản ghi finance cho ngày này chưa
+        existing_finance_record = db.query(FinanceTransaction).filter(
+            FinanceTransaction.date == selected_date,
+            FinanceTransaction.transaction_type == "Thu",
+            FinanceTransaction.description.like("Doanh thu hàng ngày%")
+        ).first()
+        
+        if existing_finance_record:
+            # Cập nhật bản ghi hiện có
+            if total_revenue > 0:
+                existing_finance_record.amount = total_revenue
+                existing_finance_record.total = total_revenue
+                existing_finance_record.note = f"Tự động cập nhật từ {len(revenue_records)} tuyến doanh thu"
+                existing_finance_record.updated_at = datetime.utcnow()
+                db.commit()
+                print(f"Updated finance record for date {selected_date} with total: {total_revenue}")
+            else:
+                # Xóa bản ghi nếu không có doanh thu
+                db.delete(existing_finance_record)
+                db.commit()
+                print(f"Deleted finance record for date {selected_date} (no revenue)")
+        else:
+            # Tạo bản ghi mới nếu có doanh thu > 0
+            if total_revenue > 0:
+                finance_record = FinanceTransaction(
+                    transaction_type="Thu",
+                    category="Doanh thu vận chuyển",
+                    date=selected_date,
+                    description=f"Doanh thu hàng ngày {selected_date.strftime('%d/%m/%Y')}",
+                    route_code="Tổng hợp",
+                    amount=total_revenue,
+                    vat=0,
+                    discount1=0,
+                    discount2=0,
+                    total=total_revenue,
+                    note=f"Tự động tạo từ {len(revenue_records)} tuyến doanh thu"
+                )
+                
+                db.add(finance_record)
+                db.commit()
+                print(f"Created finance record for date {selected_date} with total: {total_revenue}")
+            else:
+                print(f"No revenue to create finance record for date {selected_date}")
+            
+    except Exception as e:
+        print(f"Error creating/updating daily revenue finance record: {e}")
+        db.rollback()
 
 @app.get("/finance-report", response_class=HTMLResponse)
 async def finance_report_page(
@@ -2819,7 +3449,7 @@ async def export_finance_report_excel(
         month = month or current_date.month
         year = year or current_date.year
     
-    # Lấy dữ liệu tài chính từ bảng FinanceTransaction riêng biệt
+    # Lấy dữ liệu tài chính từ bảng FinanceTransaction
     finance_data = db.query(FinanceTransaction).filter(
         and_(
             extract('month', FinanceTransaction.date) == month,
@@ -2834,52 +3464,113 @@ async def export_finance_report_excel(
     
     # Tiêu đề
     ws.cell(row=1, column=1, value=f"BÁO CÁO TÀI CHÍNH THÁNG {month}/{year}").font = Font(bold=True, size=16)
-    ws.merge_cells('A1:F1')
+    ws.merge_cells('A1:K1')
     ws.cell(row=1, column=1).alignment = Alignment(horizontal='center')
     
+    # Thông tin thời gian
+    ws.merge_cells('A2:K2')
+    ws.cell(row=2, column=1, value=f"Xuất báo cáo ngày: {datetime.now().strftime('%d/%m/%Y %H:%M')}")
+    ws.cell(row=2, column=1).alignment = Alignment(horizontal='center')
+    ws.cell(row=2, column=1).font = Font(italic=True)
+    
     # Header bảng
-    headers = ["Ngày", "Danh mục", "Diễn giải", "Chi", "Thu", "Thành tiền"]
+    headers = [
+        "Ngày", "Danh mục", "Diễn giải", "Mã tuyến", 
+        "Số tiền (chưa VAT)", "VAT (%)", "CK1 (%)", "CK2 (%)", 
+        "Thành tiền", "Ghi chú"
+    ]
+    
     for col, header in enumerate(headers, 1):
-        cell = ws.cell(row=3, column=col, value=header)
-        cell.font = Font(bold=True)
-        cell.fill = PatternFill(start_color="366092", end_color="366092", fill_type="solid")
+        cell = ws.cell(row=4, column=col, value=header)
         cell.font = Font(bold=True, color="FFFFFF")
+        cell.fill = PatternFill(start_color="366092", end_color="366092", fill_type="solid")
+        cell.alignment = Alignment(horizontal="center", vertical="center")
     
     # Dữ liệu
-    for row, item in enumerate(finance_data, 4):
+    for row, item in enumerate(finance_data, 5):
         ws.cell(row=row, column=1, value=item.date.strftime('%d/%m/%Y') if item.date else '')
-        ws.cell(row=row, column=2, value=item.category or '')
+        ws.cell(row=row, column=2, value=item.transaction_type or '')
         ws.cell(row=row, column=3, value=item.description or '')
-        ws.cell(row=row, column=4, value=item.expense if item.expense > 0 else '')
-        ws.cell(row=row, column=5, value=item.income if item.income > 0 else '')
-        ws.cell(row=row, column=6, value=item.balance if item.balance else '')
+        ws.cell(row=row, column=4, value=item.route_code or '')
+        ws.cell(row=row, column=5, value=item.amount or 0)
+        ws.cell(row=row, column=6, value=item.vat or 0)
+        ws.cell(row=row, column=7, value=item.discount1 or 0)
+        ws.cell(row=row, column=8, value=item.discount2 or 0)
+        ws.cell(row=row, column=9, value=item.total or 0)
+        ws.cell(row=row, column=10, value=item.note or '')
         
         # Định dạng số cho các cột tiền
-        for col in [4, 5, 6]:
-            ws.cell(row=row, column=col).number_format = '#,##0'
+        ws.cell(row=row, column=5).number_format = '#,##0'  # Số tiền chưa VAT
+        ws.cell(row=row, column=9).number_format = '#,##0'  # Thành tiền
+        
+        # Định dạng phần trăm cho VAT và chiết khấu
+        ws.cell(row=row, column=6).number_format = '0.0"%"'  # VAT
+        ws.cell(row=row, column=7).number_format = '0.0"%"'  # CK1
+        ws.cell(row=row, column=8).number_format = '0.0"%"'  # CK2
     
     # Dòng tổng cộng
     if finance_data:
-        total_row = 4 + len(finance_data)
-        total_income = sum(item.income for item in finance_data)
-        total_expense = sum(item.expense for item in finance_data)
-        total_balance = total_income - total_expense
+        total_row = 5 + len(finance_data)
+        total_amount = sum(item.amount or 0 for item in finance_data)
+        total_final = sum(item.total or 0 for item in finance_data)
+        
+        # Tính tổng thu và chi
+        total_income = sum(item.total or 0 for item in finance_data if item.transaction_type == 'Thu')
+        total_expense = sum(item.total or 0 for item in finance_data if item.transaction_type == 'Chi')
+        net_balance = total_income - total_expense
         
         ws.cell(row=total_row, column=1, value="TỔNG CỘNG").font = Font(bold=True)
         ws.cell(row=total_row, column=2, value="").font = Font(bold=True)
         ws.cell(row=total_row, column=3, value="").font = Font(bold=True)
-        ws.cell(row=total_row, column=4, value=total_expense).font = Font(bold=True)
-        ws.cell(row=total_row, column=5, value=total_income).font = Font(bold=True)
-        ws.cell(row=total_row, column=6, value=total_balance).font = Font(bold=True)
+        ws.cell(row=total_row, column=4, value="").font = Font(bold=True)
+        ws.cell(row=total_row, column=5, value=total_amount).font = Font(bold=True)
+        ws.cell(row=total_row, column=6, value="").font = Font(bold=True)
+        ws.cell(row=total_row, column=7, value="").font = Font(bold=True)
+        ws.cell(row=total_row, column=8, value="").font = Font(bold=True)
+        ws.cell(row=total_row, column=9, value=total_final).font = Font(bold=True)
+        ws.cell(row=total_row, column=10, value="").font = Font(bold=True)
         
         # Định dạng số cho dòng tổng
-        for col in [4, 5, 6]:
-            ws.cell(row=total_row, column=col).number_format = '#,##0'
+        ws.cell(row=total_row, column=5).number_format = '#,##0'
+        ws.cell(row=total_row, column=9).number_format = '#,##0'
+        
+        # Thêm dòng tổng kết
+        summary_row = total_row + 2
+        ws.cell(row=summary_row, column=1, value="TỔNG KẾT:").font = Font(bold=True, size=12)
+        ws.cell(row=summary_row + 1, column=1, value="Tổng thu:").font = Font(bold=True)
+        ws.cell(row=summary_row + 1, column=2, value=total_income).font = Font(bold=True)
+        ws.cell(row=summary_row + 1, column=2).number_format = '#,##0'
+        ws.cell(row=summary_row + 2, column=1, value="Tổng chi:").font = Font(bold=True)
+        ws.cell(row=summary_row + 2, column=2, value=total_expense).font = Font(bold=True)
+        ws.cell(row=summary_row + 2, column=2).number_format = '#,##0'
+        ws.cell(row=summary_row + 3, column=1, value="Lợi nhuận:").font = Font(bold=True)
+        ws.cell(row=summary_row + 3, column=2, value=net_balance).font = Font(bold=True)
+        ws.cell(row=summary_row + 3, column=2).number_format = '#,##0'
+        
+        # Màu sắc cho lợi nhuận
+        if net_balance > 0:
+            ws.cell(row=summary_row + 3, column=2).font = Font(bold=True, color="00AA00")
+        elif net_balance < 0:
+            ws.cell(row=summary_row + 3, column=2).font = Font(bold=True, color="AA0000")
     
     # Điều chỉnh độ rộng cột
-    column_widths = [12, 15, 30, 15, 15, 15]
+    column_widths = [12, 12, 30, 15, 18, 10, 10, 10, 18, 25]
     for col, width in enumerate(column_widths, 1):
         ws.column_dimensions[get_column_letter(col)].width = width
+    
+    # Thêm border cho toàn bộ bảng
+    thin_border = Border(
+        left=Side(style='thin'),
+        right=Side(style='thin'),
+        top=Side(style='thin'),
+        bottom=Side(style='thin')
+    )
+    
+    # Áp dụng border cho tất cả cells có dữ liệu
+    max_row = 5 + len(finance_data) + 5  # +5 cho tổng kết
+    for row in range(1, max_row + 1):
+        for col in range(1, 11):
+            ws.cell(row=row, column=col).border = thin_border
     
     # Lưu vào memory
     output = io.BytesIO()

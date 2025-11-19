@@ -20,8 +20,8 @@
             <tr>
                 <th>STT</th>
                 <th>Biển số xe</th>
-                <th>Thông tin xe</th>
-                <th>Tải trọng</th>
+                <th>Loại xe</th>
+                <th>Tải trọng (KG)</th>
                 <th>Định mức nhiên liệu</th>
                 <th>Ngày hết hạn đăng kiểm</th>
                 <th>Sổ đăng kiểm</th>
@@ -34,10 +34,25 @@
             {% for vehicle in vehicles %}
             <tr>
                 <td>{{ loop.index }}</td>
-                <td><strong>{{ vehicle.license_plate }}</strong></td>
-                <td>{{ vehicle.vehicle_info or 'Chưa cập nhật' }}</td>
-                <td>{{ "{:,.0f}".format(vehicle.capacity) if vehicle.capacity else '0' }} kg</td>
-                <td>{{ vehicle.fuel_consumption or '0' }} l/100km</td>
+                <td style="white-space: nowrap;"><strong>{{ vehicle.license_plate }}</strong></td>
+                <td>
+                    <span style="padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; white-space: nowrap;
+                                 {% if vehicle.vehicle_type == 'Xe Nhà' %}background: #27ae60; color: white;{% else %}background: #3498db; color: white;{% endif %}">
+                        {{ vehicle.vehicle_type or 'Xe Nhà' }}
+                    </span>
+                </td>
+                <td>{{ "{:,.0f}".format(vehicle.capacity) if vehicle.capacity else '0' }}</td>
+                <td>
+                    {% if vehicle.fuel_consumption %}
+                        {% if vehicle.fuel_consumption == vehicle.fuel_consumption|int %}
+                            {{ vehicle.fuel_consumption|int }} lít
+                        {% else %}
+                            {{ vehicle.fuel_consumption }} lít
+                        {% endif %}
+                    {% else %}
+                        0 lít
+                    {% endif %}
+                </td>
                 <td>
                     {% if vehicle.inspection_expiry %}
                         {% set days_until_expiry = (vehicle.inspection_expiry - today).days %}
@@ -54,8 +69,8 @@
                 </td>
                 <td>
                     {% if vehicle.inspection_documents %}
-                        <button type="button" class="btn btn-sm btn-info" onclick="viewInspectionDocuments({{ vehicle.id }})">
-                            👁️ Xem
+                        <button type="button" class="btn btn-sm btn-info" onclick="viewInspectionDocuments({{ vehicle.id }})" style="padding: 5px 10px; font-size: 12px;">
+                            Xem
                         </button>
                     {% else %}
                         <span style="color: #95a5a6;">Chưa có</span>
@@ -77,15 +92,15 @@
                 </td>
                 <td>
                     {% if vehicle.phu_hieu_files %}
-                        <button type="button" class="btn btn-sm btn-info" onclick="viewPhuHieuDocuments({{ vehicle.id }})">
-                            👁️ Xem
+                        <button type="button" class="btn btn-sm btn-info" onclick="viewPhuHieuDocuments({{ vehicle.id }})" style="padding: 5px 10px; font-size: 12px;">
+                            Xem
                         </button>
                     {% else %}
                         <span style="color: #95a5a6;">Chưa có</span>
                     {% endif %}
                 </td>
                 <td>
-                    <div style="display: flex; gap: 5px; flex-wrap: wrap;">
+                    <div style="display: flex; gap: 5px; flex-wrap: nowrap; white-space: nowrap;">
                         <a href="/vehicles/edit/{{ vehicle.id }}" class="btn btn-sm btn-primary" style="padding: 5px 10px; font-size: 12px;">Sửa</a>
                         <form method="post" action="/vehicles/delete/{{ vehicle.id }}" style="display: inline;" onsubmit="return confirm('Bạn có chắc chắn muốn xóa xe này?')">
                             <button type="submit" class="btn btn-sm btn-danger" style="padding: 5px 10px; font-size: 12px;">Xóa</button>
@@ -119,8 +134,11 @@
                         <input type="text" id="license_plate" name="license_plate" required placeholder="VD: 50H-448.42">
                     </div>
                     <div class="form-group">
-                        <label for="vehicle_info">Thông tin xe *</label>
-                        <input type="text" id="vehicle_info" name="vehicle_info" required placeholder="VD: Hino 3T">
+                        <label for="vehicle_type">Loại xe *</label>
+                        <select id="vehicle_type" name="vehicle_type" required style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                            <option value="Xe Nhà" selected>Xe Nhà</option>
+                            <option value="Xe Đối tác">Xe Đối tác</option>
+                        </select>
                     </div>
                     <div class="form-group">
                         <label for="capacity">Tải trọng (kg) *</label>
@@ -194,11 +212,14 @@
     </div>
 </div>
 
-<div style="margin-top: 30px; padding: 20px; background: rgba(241, 196, 15, 0.1); border-radius: 10px; border-left: 4px solid #f1c40f;">
+<!-- Lưu ý - Đã ẩn -->
+<div style="display: none; margin-top: 30px; padding: 20px; background: rgba(241, 196, 15, 0.1); border-radius: 10px; border-left: 4px solid #f1c40f;">
     <h4 style="color: #f39c12; margin-bottom: 10px;">💡 Lưu ý:</h4>
     <ul style="color: #2c3e50; line-height: 1.6;">
         <li>Biển số xe phải là duy nhất trong hệ thống</li>
-        <li>Thông tin xe và tải trọng là bắt buộc</li>
+        <li>Loại xe và tải trọng là bắt buộc</li>
+        <li><strong>Xe Nhà:</strong> Xe thuộc sở hữu của công ty</li>
+        <li><strong>Xe Đối tác:</strong> Xe thuê hoặc hợp tác từ bên ngoài</li>
         <li>Ngày hết hạn đăng kiểm sẽ hiển thị cảnh báo nếu sắp hết hạn (dưới 30 ngày)</li>
         <li>Có thể upload nhiều ảnh sổ đăng kiểm</li>
     </ul>

@@ -42,12 +42,12 @@
             </div>
             
             <div class="form-group">
-                <label for="driving_license">Số bằng lái xe</label>
-                <input type="text" id="driving_license" name="driving_license" placeholder="Nhập số bằng lái xe" value="{{ employee.driving_license or '' }}">
+                <label for="driving_license">Hạng bằng lái</label>
+                <input type="text" id="driving_license" name="driving_license" placeholder="Nhập hạng bằng lái (VD: B2, C, D)" value="{{ employee.driving_license or '' }}">
             </div>
             
-            <div class="form-group">
-                <label for="license_expiry">Ngày hết hạn bằng lái xe</label>
+            <div class="form-group" style="display: none;">
+                <label for="license_expiry">Ngày hết hạn bằng lái</label>
                 <input type="date" id="license_expiry" name="license_expiry" value="{{ employee.license_expiry.strftime('%Y-%m-%d') if employee.license_expiry else '' }}">
             </div>
         </div>
